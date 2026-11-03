@@ -300,3 +300,58 @@ export function ServiceIcon({
     </svg>
   );
 }
+
+export type SocialIconName = "facebook" | "tiktok" | "instagram" | "whatsapp";
+
+/** Vier Social-Icons im selben Strich-/Flächen-Stil wie {@link FeatureIcon}
+ *  — bewusst vereinfachte, einfarbige (currentColor) Eigeninterpretationen
+ *  statt mehrfarbiger offizieller Logos, damit Header/Footer sich wie Teil
+ *  des Netwitcher-Designsystems lesen statt wie ein generisches Social-
+ *  Media-Widget. */
+export function SocialIcon({
+  icon,
+  className = "h-4 w-4",
+}: {
+  icon: SocialIconName;
+  className?: string;
+}) {
+  const paths: Record<SocialIconName, React.ReactNode> = {
+    facebook: (
+      <path
+        d="M13.4 21v-7.2h2.42l.36-2.8h-2.78v-1.8c0-.81.23-1.36 1.39-1.36h1.49V5.3A20.6 20.6 0 0 0 14.3 5.2c-2.17 0-3.66 1.33-3.66 3.77v2.1H8.2v2.8h2.44V21h2.76Z"
+        fill="currentColor"
+        stroke="none"
+      />
+    ),
+    tiktok: (
+      <path
+        d="M16.6 3.1c.4 2 1.8 3.5 3.9 3.7v2.8c-1.4 0-2.8-.4-3.9-1.3v6.1a5.5 5.5 0 1 1-5.5-5.5c.3 0 .6 0 .9.1v2.9a2.6 2.6 0 1 0 1.8 2.5V3.1h2.8Z"
+        fill="currentColor"
+        stroke="none"
+      />
+    ),
+    instagram: (
+      <>
+        <rect x="3.5" y="3.5" width="17" height="17" rx="5" />
+        <circle cx="12" cy="12" r="4.2" />
+        <circle cx="17" cy="7" r="1" fill="currentColor" stroke="none" />
+      </>
+    ),
+    whatsapp: (
+      <>
+        <circle cx="12" cy="12" r="8.5" />
+        <path
+          d="M8.9 9c.2-.5.5-.5.7-.5h.6c.2 0 .4 0 .5.4s.6 1.5.6 1.6.1.3 0 .4-.2.4-.3.5-.3.3-.1.6c.3.5.8 1.1 1.6 1.6.8.4.9.3 1.1.3s.5-.3.7-.6.4-.3.7-.2 1.4.7 1.7.8.4.2.4.3-.1.8-.3 1.1-.8.8-1.6.8c-1 0-2.7-.6-4-1.9C9.7 13.7 9 12.3 9 11.1c0-.4.1-1.1.4-1.6Z"
+          fill="currentColor"
+          stroke="none"
+        />
+      </>
+    ),
+  };
+
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true" {...strokeProps}>
+      {paths[icon]}
+    </svg>
+  );
+}

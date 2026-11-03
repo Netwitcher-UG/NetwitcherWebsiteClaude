@@ -10,6 +10,8 @@ import { getDict } from "@/lib/i18n/dictionary";
 import { withLocale, type Locale } from "@/lib/i18n/locale";
 import { navServicesAr, navServicesDe } from "@/lib/i18n/nav-services";
 import { ARROW_PATH } from "./arrows";
+import { SocialIcon } from "./icons";
+import { socialLinks } from "@/lib/site";
 
 export function Header({ locale = "de" }: { locale?: Locale }) {
   const [scrolled, setScrolled] = useState(false);
@@ -139,6 +141,20 @@ export function Header({ locale = "de" }: { locale?: Locale }) {
         </nav>
 
         <div className="flex items-center gap-3">
+          <div className="hidden items-center gap-0.5 lg:flex">
+            {socialLinks.map((s) => (
+              <a
+                key={s.id}
+                href={s.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={s.ariaLabel}
+                className="flex h-7 w-7 items-center justify-center rounded-full text-ink-3 transition-colors hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mint"
+              >
+                <SocialIcon icon={s.id} className="h-[15px] w-[15px]" />
+              </a>
+            ))}
+          </div>
           <div className="hidden sm:block">
             <LanguageSwitcher locale={locale} dict={t} />
           </div>
@@ -199,6 +215,20 @@ export function Header({ locale = "de" }: { locale?: Locale }) {
               </Link>
               <div className="mt-3 flex justify-center sm:hidden">
                 <LanguageSwitcher locale={locale} dict={t} variant="mobile" />
+              </div>
+              <div className="mt-4 flex items-center justify-center gap-2 border-t border-line pt-4">
+                {socialLinks.map((s) => (
+                  <a
+                    key={s.id}
+                    href={s.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={s.ariaLabel}
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white text-ink-3 transition-colors hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mint"
+                  >
+                    <SocialIcon icon={s.id} className="h-4 w-4" />
+                  </a>
+                ))}
               </div>
             </div>
           </motion.nav>

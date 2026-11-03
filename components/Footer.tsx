@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { BrandStar, BrandWordmark } from "./brand/Logo";
-import { site, whatsappHref } from "@/lib/site";
+import { site, whatsappHref, socialLinks } from "@/lib/site";
 import { getDict } from "@/lib/i18n/dictionary";
 import { withLocale, type Locale } from "@/lib/i18n/locale";
 import { navServicesAr, navServicesDe } from "@/lib/i18n/nav-services";
+import { SocialIcon } from "./icons";
 
 export function Footer({ locale = "de" }: { locale?: Locale }) {
   const t = getDict(locale);
@@ -26,6 +27,20 @@ export function Footer({ locale = "de" }: { locale?: Locale }) {
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-white/65">
               {t.footer.description}
             </p>
+            <div className="mt-5 flex items-center gap-2.5">
+              {socialLinks.map((s) => (
+                <a
+                  key={s.id}
+                  href={s.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={s.ariaLabel}
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 text-white/65 transition-colors hover:border-white/40 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mint"
+                >
+                  <SocialIcon icon={s.id} className="h-[18px] w-[18px]" />
+                </a>
+              ))}
+            </div>
           </div>
 
           <nav aria-label={t.footer.servicesHeading}>
