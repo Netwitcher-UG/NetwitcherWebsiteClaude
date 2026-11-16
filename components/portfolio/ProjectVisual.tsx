@@ -1,5 +1,8 @@
+import Image from "next/image";
+import { getDict } from "@/lib/i18n/dictionary";
+import type { Locale } from "@/lib/i18n/locale";
 import type { PortfolioProject } from "@/lib/portfolio";
-import { projectKind } from "@/lib/portfolio";
+import { projectKind, ratioValue } from "@/lib/portfolio";
 import { BrowserFrame, PhoneFrame } from "./Frames";
 import { Placeholder } from "./Placeholder";
 import { SmartImage } from "./SmartImage";
@@ -18,18 +21,21 @@ export function ProjectVisual({
   project,
   priority = false,
   sizes = "(min-width: 1024px) 60vw, 100vw",
+  locale = "de",
 }: {
   project: PortfolioProject;
   priority?: boolean;
   sizes?: string;
+  locale?: Locale;
 }) {
   const kind = projectKind(project);
   const m = mono(project.client);
+  const t = getDict(locale);
 
   if (kind === "website" && project.website) {
     const { desktop, mobile, url } = project.website;
     return (
-      <div className="relative pr-[14%] pb-[8%] sm:pr-[18%]">
+      <div className="relative pr-[14%] pb-[8%] sm:pr-[18%] rtl:pr-0 rtl:pl-[14%] sm:rtl:pl-[18%]">
         <BrowserFrame
           image={desktop ?? project.cover}
           color={project.color}
@@ -37,13 +43,15 @@ export function ProjectVisual({
           sizes={sizes}
           priority={priority}
           monogram={m}
+          locale={locale}
         />
-        <div className="absolute bottom-0 right-0 w-[30%] max-w-[210px] sm:w-[27%]">
+        <div className="absolute bottom-0 right-0 w-[30%] max-w-[210px] sm:w-[27%] rtl:right-auto rtl:left-0">
           <PhoneFrame
             image={mobile ?? { alt: `${project.client}, mobile Ansicht` }}
             color={project.color}
             sizes="(min-width: 1024px) 14vw, 30vw"
             monogram={m}
+            locale={locale}
           />
         </div>
       </div>
@@ -60,7 +68,7 @@ export function ProjectVisual({
           return (
             <div
               key={v.title + i}
-              className={`relative w-[38%] max-w-[240px] overflow-hidden rounded-2xl border border-white/10 shadow-[0_40px_80px_-30px_rgba(0,0,0,0.8)] transition-transform duration-500 md:rounded-3xl ${
+              className={`relative w-[38%] max-w-[240px] overflow-hidden rounded-2xl border border-line shadow-lift transition-transform duration-500 md:rounded-3xl ${
                 center ? "z-10 scale-[1.06] md:w-[36%]" : i === 0 ? "-rotate-3 translate-y-4" : "rotate-3 translate-y-4"
               }`}
               style={{ aspectRatio: "9 / 16" }}
@@ -90,27 +98,45 @@ export function ProjectVisual({
   if (kind === "software" && project.screens?.length) {
     const [main, second] = project.screens;
     return (
-      <div className="relative pb-[10%] pr-[10%]">
-        <div className="overflow-hidden rounded-2xl border border-white/10 shadow-[0_40px_80px_-30px_rgba(0,0,0,0.8)] md:rounded-3xl">
-          <SmartImage
-            image={main}
-            color={project.color}
-            ratio="16/10"
-            sizes={sizes}
-            priority={priority}
-            monogram={m}
-            label={main.caption ?? "Screenshot folgt"}
-            rounded="rounded-none"
-          />
-        </div>
+      <div className="relative pb-[10%] pr-[10%] rtl:pr-0 rtl:pl-[10%]">
+        {project.heroContain ? (
+          <div
+            className="relative w-full overflow-hidden rounded-2xl border border-line bg-paper-2 shadow-lift md:rounded-3xl"
+            style={{ aspectRatio: ratioValue(main.ratio ?? "16/9") }}
+          >
+            {main.src && (
+              <Image
+                src={main.src}
+                alt={main.alt}
+                fill
+                sizes={sizes}
+                priority={priority}
+                className="object-contain p-6 sm:p-8 md:p-12"
+              />
+            )}
+          </div>
+        ) : (
+          <div className="overflow-hidden rounded-2xl border border-line shadow-lift md:rounded-3xl">
+            <SmartImage
+              image={main}
+              color={project.color}
+              ratio="16/10"
+              sizes={sizes}
+              priority={priority}
+              monogram={m}
+              label={main.caption ?? t.portfolio.screenshotComingSoon}
+              rounded="rounded-none"
+            />
+          </div>
+        )}
         {second && (
-          <div className="absolute bottom-0 right-0 w-[46%] overflow-hidden rounded-xl border border-white/10 shadow-[0_30px_60px_-20px_rgba(0,0,0,0.9)] md:rounded-2xl">
+          <div className="absolute bottom-0 right-0 w-[46%] overflow-hidden rounded-xl border border-line shadow-lift md:rounded-2xl rtl:right-auto rtl:left-0">
             <SmartImage
               image={second}
               color={project.color}
               ratio={second.ratio === "9/16" ? "9/16" : "16/10"}
               sizes="(min-width: 1024px) 28vw, 46vw"
-              label={second.caption ?? "Screenshot folgt"}
+              label={second.caption ?? t.portfolio.screenshotComingSoon}
               rounded="rounded-none"
               className={second.ratio === "9/16" ? "max-h-[70%]" : ""}
             />
@@ -122,7 +148,7 @@ export function ProjectVisual({
 
   const companion = project.images?.[0] ?? project.posters?.[0] ?? project.socialPosts?.[0];
   return (
-    <div className="relative pb-[8%] pr-[12%]">
+    <div className="relative pb-[8%] pr-[12%] rtl:pr-0 rtl:pl-[12%]">
       <SmartImage
         image={project.cover}
         color={project.color}
@@ -130,7 +156,7 @@ export function ProjectVisual({
         priority={priority}
         monogram={m}
         rounded="rounded-2xl md:rounded-3xl"
-        className="shadow-[0_40px_80px_-30px_rgba(0,0,0,0.8)]"
+        className="shadow-lift"
       />
       {companion && (
         <SmartImage
@@ -139,7 +165,7 @@ export function ProjectVisual({
           ratio="4/5"
           sizes="(min-width: 1024px) 18vw, 36vw"
           rounded="rounded-xl md:rounded-2xl"
-          className="absolute bottom-0 right-0 w-[34%] border border-white/10 shadow-[0_30px_60px_-20px_rgba(0,0,0,0.9)]"
+          className="absolute bottom-0 right-0 w-[34%] border border-line shadow-lift rtl:right-auto rtl:left-0"
         />
       )}
     </div>

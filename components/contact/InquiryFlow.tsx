@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ARROW_COLORS, ARROW_PATH } from "@/components/arrows";
+import { withLocale, type Locale } from "@/lib/i18n/locale";
 import { site, whatsappHref } from "@/lib/site";
 
 /**
@@ -19,9 +20,10 @@ import { site, whatsappHref } from "@/lib/site";
  * <fieldset>/<legend>, native Validierung, sichtbarer Fokus. Die einzige
  * Bewegung ist ein kurzer Schritt-Übergang, der bei "reduce motion" entfällt.
  *
- * Versand ohne Backend: die Angaben werden zu einer fertigen Nachricht
- * zusammengesetzt und wahlweise per E-Mail oder WhatsApp geöffnet.
- * Für ein späteres Backend genügt es, buildMessage() an eine API-Route zu POSTen.
+ * Versand: der "Anfrage senden"-Pfad POSTet serverseitig an /api/contact
+ * (Microsoft Graph, siehe dort) — kein mailto/E-Mail-Client. Der WhatsApp-
+ * Pfad bleibt unverändert ein direkter wa.me-Link mit vorausgefüllter
+ * Nachricht, das ist bewusst so gewollt (eigene, separate Kontaktoption).
  */
 
 type Topic = {
@@ -31,7 +33,7 @@ type Topic = {
   accent: keyof typeof ARROW_COLORS;
 };
 
-const TOPICS: Topic[] = [
+const TOPICS_DE: Topic[] = [
   { id: "content-studio", label: "Content & Studio", hint: "Regelmäßiger Content aus dem Studio Berlin", accent: "pink" },
   { id: "foto-video", label: "Foto & Video", hint: "Produkt-, Team- oder Imageproduktion", accent: "pink" },
   { id: "social-media", label: "Social Media", hint: "Kanäle aufbauen, betreuen, wachsen lassen", accent: "sky" },
@@ -43,35 +45,55 @@ const TOPICS: Topic[] = [
   { id: "anderes", label: "Etwas anderes", hint: "Erzähl es uns einfach in eigenen Worten", accent: "sun" },
 ];
 
-const TIMINGS = [
+const TOPICS_AR: Topic[] = [
+  { id: "content-studio", label: "المحتوى والاستوديو", hint: "محتوى منتظم من استوديو برلين", accent: "pink" },
+  { id: "foto-video", label: "تصوير وفيديو", hint: "إنتاج للمنتجات، والفرق، وصورة العلامة التجارية.", accent: "pink" },
+  { id: "social-media", label: "وسائل التواصل الاجتماعي", hint: "بناء القنوات وإدارتها وتنميتها", accent: "sky" },
+  { id: "ads", label: "إعلانات", hint: "إعلانات Meta وGoogle وTikTok مع إدارة مسؤولة للميزانية.", accent: "sky" },
+  { id: "website", label: "موقع إلكتروني", hint: "موقع جديد أو إعادة تصميم أو متجر إلكتروني", accent: "mint" },
+  { id: "seo", label: "تحسين محركات البحث", hint: "الظهور عندما يبحث العملاء عن خدماتك.", accent: "mint" },
+  { id: "branding", label: "الهوية البصرية", hint: "شعار، نظام تصميم، مطبوعات", accent: "violet" },
+  { id: "software", label: "برمجيات", hint: "أدوات مخصصة، بوابات، أتمتة", accent: "violet" },
+  { id: "anderes", label: "شيء آخر", hint: "أخبرنا به بكلماتك الخاصة", accent: "sun" },
+];
+
+const TIMINGS_DE = [
   { id: "asap", label: "So schnell wie möglich" },
   { id: "wochen", label: "In den nächsten Wochen" },
   { id: "planung", label: "Noch in Planung" },
 ];
 
-/**
- * Übernimmt ?service=… aus Links wie /kontakt?service=Fotoshooting.
- * Die Reihenfolge entscheidet: das erste passende Stichwort gewinnt.
- * Kein Treffer heißt schlicht: Schritt 1 wird ganz normal gezeigt.
- */
-const PARAM_KEYWORDS: [string[], string][] = [
-  [["foto", "video", "shooting", "film"], "foto-video"],
-  [["content", "studio", "reel"], "content-studio"],
-  [["social", "instagram", "tiktok"], "social-media"],
-  [["ads", "performance", "marketing", "kampagne"], "ads"],
-  [["seo", "suchmaschine"], "seo"],
-  [["web", "shop", "commerce", "landing"], "website"],
-  [["brand", "logo", "design", "print", "druck"], "branding"],
-  [["software", "support", "entwicklung", "app", "portal"], "software"],
+const TIMINGS_AR = [
+  { id: "asap", label: "في أقرب وقت ممكن" },
+  { id: "wochen", label: "خلال الأسابيع القادمة" },
+  { id: "planung", label: "لا يزال قيد التخطيط" },
 ];
 
-function topicFromParam(param: string | null): Topic | null {
+/**
+ * Übernimmt ?service=… aus Links wie /kontakt?service=Fotoshooting. Die
+ * Stichwortliste deckt deutsche UND arabische Varianten ab (Links können aus
+ * beiden Sprachversionen kommen, z. B. übersetzte navTitle-Werte) — die
+ * Reihenfolge entscheidet: das erste passende Stichwort gewinnt. Kein
+ * Treffer heißt schlicht: Schritt 1 wird ganz normal gezeigt.
+ */
+const PARAM_KEYWORDS: [string[], string][] = [
+  [["foto", "video", "shooting", "film", "تصوير", "فيديو"], "foto-video"],
+  [["content", "studio", "reel", "محتوى", "استوديو", "ريلز"], "content-studio"],
+  [["social", "instagram", "tiktok", "سوشيال", "ميديا"], "social-media"],
+  [["ads", "performance", "marketing", "kampagne", "إعلان", "تسويق", "حملة"], "ads"],
+  [["seo", "suchmaschine", "بحث"], "seo"],
+  [["web", "shop", "commerce", "landing", "موقع", "متجر"], "website"],
+  [["brand", "logo", "design", "print", "druck", "هوية", "تصميم", "طباعة"], "branding"],
+  [["software", "support", "entwicklung", "app", "portal", "برمج", "دعم", "تطبيق"], "software"],
+];
+
+function topicFromParam(param: string | null, topics: Topic[]): Topic | null {
   if (!param) return null;
   const p = param.toLowerCase();
   const id =
-    TOPICS.find((t) => t.id === p || t.label.toLowerCase() === p)?.id ??
+    topics.find((t) => t.id === p || t.label.toLowerCase() === p)?.id ??
     PARAM_KEYWORDS.find(([words]) => words.some((w) => p.includes(w)))?.[1];
-  return TOPICS.find((t) => t.id === id) ?? null;
+  return topics.find((t) => t.id === id) ?? null;
 }
 
 function Arrow({ color, className = "" }: { color: string; className?: string }) {
@@ -85,7 +107,8 @@ function Arrow({ color, className = "" }: { color: string; className?: string })
 const inputCls =
   "w-full rounded border border-ink/15 bg-white px-4 py-3 text-base text-ink placeholder:text-ink-3 transition-colors hover:border-ink/20 focus:border-mint focus:outline-none";
 
-const STEP_LABELS = ["Thema", "Vorhaben", "Kontakt"];
+const STEP_LABELS_DE = ["Thema", "Vorhaben", "Kontakt"];
+const STEP_LABELS_AR = ["مجال المشروع", "التفاصيل", "التواصل"];
 
 type Fields = {
   message: string;
@@ -93,22 +116,30 @@ type Fields = {
   email: string;
   company: string;
   phone: string;
+  /** Honeypot: für Menschen unsichtbares Feld, muss leer bleiben. */
+  hp: string;
 };
 
-const EMPTY: Fields = { message: "", name: "", email: "", company: "", phone: "" };
+const EMPTY: Fields = { message: "", name: "", email: "", company: "", phone: "", hp: "" };
 
-function Flow() {
+function Flow({ locale = "de" }: { locale?: Locale }) {
   const params = useSearchParams();
   const reduce = useReducedMotion();
   const formRef = useRef<HTMLFormElement>(null);
+  const isAr = locale === "ar";
+  const TOPICS = isAr ? TOPICS_AR : TOPICS_DE;
+  const TIMINGS = isAr ? TIMINGS_AR : TIMINGS_DE;
+  const STEP_LABELS = isAr ? STEP_LABELS_AR : STEP_LABELS_DE;
+  const arrowMirror = "rtl:-scale-x-100 rtl:group-hover:-translate-x-1";
 
-  const preselected = topicFromParam(params.get("service"));
+  const preselected = topicFromParam(params.get("service"), TOPICS);
   const [step, setStep] = useState(preselected ? 1 : 0);
   const [topic, setTopic] = useState<Topic | null>(preselected);
   const [timing, setTiming] = useState("");
   // Gesteuerte Felder: ein Schritt zurück darf Getipptes nie verwerfen.
   const [fields, setFields] = useState<Fields>(EMPTY);
-  const [sent, setSent] = useState<null | "mail" | "whatsapp">(null);
+  const [sent, setSent] = useState<null | "whatsapp" | "success" | "error">(null);
+  const [submitting, setSubmitting] = useState(false);
   // Der Fokus wandert auf die Überschrift des neuen Schritts, sobald diese
   // wirklich im DOM steht. Callback-Ref statt Effect, weil AnimatePresence
   // (mode="wait") erst nach der Exit-Animation montiert. Beim ersten Rendern
@@ -139,33 +170,63 @@ function Flow() {
   };
 
   const buildMessage = () => {
-    const lines = [
-      `Thema: ${topic?.label ?? "-"}`,
-      `Zeitrahmen: ${TIMINGS.find((t) => t.id === timing)?.label ?? "offen"}`,
-      "",
-      fields.message,
-      "",
-      `Name: ${fields.name}`,
-      `E-Mail: ${fields.email}`,
-    ];
-    if (fields.company) lines.push(`Unternehmen: ${fields.company}`);
-    if (fields.phone) lines.push(`Telefon: ${fields.phone}`);
+    const lines = isAr
+      ? [
+          `الموضوع: ${topic?.label ?? "-"}`,
+          `الإطار الزمني: ${TIMINGS.find((t) => t.id === timing)?.label ?? "غير محدد"}`,
+          "",
+          fields.message,
+          "",
+          `الاسم: ${fields.name}`,
+          `البريد الإلكتروني: ${fields.email}`,
+        ]
+      : [
+          `Thema: ${topic?.label ?? "-"}`,
+          `Zeitrahmen: ${TIMINGS.find((t) => t.id === timing)?.label ?? "offen"}`,
+          "",
+          fields.message,
+          "",
+          `Name: ${fields.name}`,
+          `E-Mail: ${fields.email}`,
+        ];
+    if (fields.company) lines.push(`${isAr ? "الشركة" : "Unternehmen"}: ${fields.company}`);
+    if (fields.phone) lines.push(`${isAr ? "الهاتف" : "Telefon"}: ${fields.phone}`);
     return lines.join("\n");
   };
 
-  const submitMail = (e: React.FormEvent<HTMLFormElement>) => {
+  const submitForm = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const subject = `Anfrage: ${topic?.label ?? "Allgemein"}`;
-    window.location.href = `mailto:${site.email}?subject=${encodeURIComponent(
-      subject
-    )}&body=${encodeURIComponent(buildMessage())}`;
-    setSent("mail");
+    if (submitting || sent === "success") return;
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          locale,
+          topicId: topic?.id ?? "",
+          timingId: timing,
+          message: fields.message,
+          name: fields.name,
+          email: fields.email,
+          company: fields.company,
+          phone: fields.phone,
+          hp: fields.hp,
+        }),
+      });
+      const data = (await res.json().catch(() => null)) as { ok?: boolean } | null;
+      setSent(res.ok && data?.ok ? "success" : "error");
+    } catch {
+      setSent("error");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const submitWhatsapp = () => {
     if (!formRef.current?.reportValidity()) return;
     window.open(
-      whatsappHref(`Hallo Netwitcher!\n\n${buildMessage()}`),
+      whatsappHref(`${isAr ? "مرحباً نتويتشر!" : "Hallo Netwitcher!"}\n\n${buildMessage()}`),
       "_blank",
       "noopener,noreferrer"
     );
@@ -178,9 +239,9 @@ function Flow() {
   const variants = reduce
     ? undefined
     : {
-        enter: { opacity: 0, x: 16 },
+        enter: { opacity: 0, x: isAr ? -16 : 16 },
         center: { opacity: 1, x: 0 },
-        exit: { opacity: 0, x: -16 },
+        exit: { opacity: 0, x: isAr ? 16 : -16 },
       };
 
   return (
@@ -190,7 +251,7 @@ function Flow() {
         aria-live="polite"
         className="font-heading text-xs font-bold uppercase tracking-[0.25em] text-ink-3"
       >
-        Schritt {step + 1} von 3: {STEP_LABELS[step]}
+        {isAr ? `الخطوة ${step + 1} من 3: ${STEP_LABELS[step]}` : `Schritt ${step + 1} von 3: ${STEP_LABELS[step]}`}
       </p>
       <div className="mt-3 flex gap-1.5" aria-hidden="true">
         {STEP_LABELS.map((label, i) => (
@@ -203,7 +264,24 @@ function Flow() {
         ))}
       </div>
 
-      <form ref={formRef} onSubmit={submitMail} className="mt-8">
+      <form ref={formRef} onSubmit={submitForm} className="mt-8">
+        {/* Honeypot: per clip (nicht display:none) unsichtbar, damit auch
+            Bots, die Sichtbarkeit prüfen, nicht drauf reinfallen — bewusst
+            NICHT per -left-[9999px] o. Ä. positioniert, das bläht sonst die
+            Dokumentbreite auf und erzeugt einen horizontalen Scrollbalken.
+            Ausgefüllt -> serverseitig als Spam behandelt, siehe /api/contact. */}
+        <div className="sr-only">
+          <label htmlFor="hp">{isAr ? "اترك هذا الحقل فارغًا" : "Dieses Feld bitte leer lassen"}</label>
+          <input
+            id="hp"
+            name="hp"
+            type="text"
+            tabIndex={-1}
+            autoComplete="off"
+            value={fields.hp}
+            onChange={set("hp")}
+          />
+        </div>
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={step}
@@ -221,22 +299,24 @@ function Flow() {
                   tabIndex={-1}
                   className="font-heading text-2xl font-black tracking-tight focus:outline-none md:text-3xl"
                 >
-                  Wobei können wir helfen?
+                  {isAr ? "بماذا يمكننا مساعدتك؟" : "Wobei können wir helfen?"}
                 </h2>
                 <p className="mt-3 text-sm text-ink-3">
-                  Wähl das, was am ehesten passt. Alles Weitere klären wir im Gespräch.
+                  {isAr
+                    ? "اختر الأقرب لاحتياجك. كل التفاصيل الأخرى نوضحها في الحوار."
+                    : "Wähl das, was am ehesten passt. Alles Weitere klären wir im Gespräch."}
                 </p>
                 <ul className="mt-7 grid gap-2 sm:grid-cols-2">
                   {TOPICS.map((t) => (
-                    <li key={t.id}>
+                    <li key={t.id} className="h-full">
                       <button
                         type="button"
                         onClick={() => choose(t)}
-                        className="group flex w-full items-start gap-3 rounded border border-ink/10 bg-white px-4 py-4 text-left transition-colors hover:border-ink/35 hover:bg-ink/5"
+                        className="group flex h-full min-h-28 w-full items-center gap-3 rounded border border-ink/10 bg-white px-4 py-4 text-left rtl:text-right transition-colors hover:border-ink/35 hover:bg-ink/5"
                       >
                         <Arrow
                           color={ARROW_COLORS[t.accent]}
-                          className="mt-1.5 shrink-0 transition-transform duration-200 group-hover:translate-x-1"
+                          className={`shrink-0 transition-transform duration-200 ${arrowMirror} group-hover:translate-x-1`}
                         />
                         <span>
                           <span className="block font-heading text-base font-bold tracking-tight">
@@ -261,7 +341,7 @@ function Flow() {
                   tabIndex={-1}
                   className="font-heading text-2xl font-black tracking-tight focus:outline-none md:text-3xl"
                 >
-                  Was steht an?
+                  {isAr ? "ما الذي تخطط له؟" : "Was steht an?"}
                 </h2>
                 <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-3">
                   <span className="inline-flex items-center gap-2 text-ink">
@@ -273,13 +353,13 @@ function Flow() {
                     onClick={() => go(0)}
                     className="underline underline-offset-4 transition-colors hover:text-ink"
                   >
-                    ändern
+                    {isAr ? "تغيير" : "ändern"}
                   </button>
                 </p>
 
                 <div className="mt-7">
                   <label htmlFor="message" className="mb-2 block text-sm font-medium">
-                    Zwei, drei Sätze genügen
+                    {isAr ? "جملتان أو ثلاث تكفي" : "Zwei, drei Sätze genügen"}
                   </label>
                   <textarea
                     id="message"
@@ -289,14 +369,18 @@ function Flow() {
                     value={fields.message}
                     onChange={set("message")}
                     className={inputCls}
-                    placeholder="Zum Beispiel: Wir bringen im Herbst eine neue Produktlinie raus und brauchen Fotos und Reels dafür."
+                    placeholder={
+                      isAr
+                        ? "مثال: سنطلق خط منتجات جديد في الخريف ونحتاج صوراً وريلز له."
+                        : "Zum Beispiel: Wir bringen im Herbst eine neue Produktlinie raus und brauchen Fotos und Reels dafür."
+                    }
                   />
                 </div>
 
                 <fieldset className="mt-7">
                   <legend className="mb-3 text-sm font-medium">
-                    Wann soll es losgehen?{" "}
-                    <span className="text-ink-3">(optional)</span>
+                    {isAr ? "متى تريد البدء؟" : "Wann soll es losgehen?"}{" "}
+                    <span className="text-ink-3">{isAr ? "(اختياري)" : "(optional)"}</span>
                   </legend>
                   <div className="flex flex-wrap gap-2">
                     {TIMINGS.map((t) => (
@@ -326,12 +410,12 @@ function Flow() {
                   <button
                     type="button"
                     onClick={nextFromDetails}
-                    className="group inline-flex items-center justify-center gap-2.5 rounded bg-ink px-7 py-3.5 font-heading text-sm font-bold tracking-wide text-ink transition-colors hover:bg-paper-2"
+                    className="group inline-flex items-center justify-center gap-2.5 rounded bg-[#1B103F] px-7 py-3.5 font-heading text-sm font-bold tracking-wide text-white shadow-[0_8px_24px_rgba(27,16,63,0.18)] transition-colors hover:bg-[#2A1760]"
                   >
-                    Weiter
+                    {isAr ? "التالي" : "Weiter"}
                     <Arrow
                       color="currentColor"
-                      className="transition-transform duration-200 group-hover:translate-x-1"
+                      className={`transition-transform duration-200 ${arrowMirror} group-hover:translate-x-1`}
                     />
                   </button>
                   <button
@@ -339,7 +423,7 @@ function Flow() {
                     onClick={() => go(0)}
                     className="text-sm text-ink-3 underline underline-offset-4 transition-colors hover:text-ink"
                   >
-                    Zurück
+                    {isAr ? "رجوع" : "Zurück"}
                   </button>
                 </div>
               </div>
@@ -353,17 +437,18 @@ function Flow() {
                   tabIndex={-1}
                   className="font-heading text-2xl font-black tracking-tight focus:outline-none md:text-3xl"
                 >
-                  Wie erreichen wir dich?
+                  {isAr ? "كيف يمكننا التواصل معك؟" : "Wie erreichen wir dich?"}
                 </h2>
                 <p className="mt-3 text-sm text-ink-3">
-                  Wir antworten innerhalb eines Werktags, mit einer ehrlichen
-                  Einschätzung, nicht mit einem Verkaufsgespräch.
+                  {isAr
+                    ? "نرد خلال يوم عمل واحد، بتقييم صادق، لا بمحادثة بيع."
+                    : "Wir antworten innerhalb eines Werktags, mit einer ehrlichen Einschätzung, nicht mit einem Verkaufsgespräch."}
                 </p>
 
                 <div className="mt-7 grid gap-5 sm:grid-cols-2">
                   <div>
                     <label htmlFor="name" className="mb-2 block text-sm font-medium">
-                      Name
+                      {isAr ? "الاسم" : "Name"}
                     </label>
                     <input
                       id="name"
@@ -373,12 +458,12 @@ function Flow() {
                       value={fields.name}
                       onChange={set("name")}
                       className={inputCls}
-                      placeholder="Dein Name"
+                      placeholder={isAr ? "اسمك" : "Dein Name"}
                     />
                   </div>
                   <div>
                     <label htmlFor="email" className="mb-2 block text-sm font-medium">
-                      E-Mail
+                      {isAr ? "البريد الإلكتروني" : "E-Mail"}
                     </label>
                     <input
                       id="email"
@@ -389,12 +474,13 @@ function Flow() {
                       value={fields.email}
                       onChange={set("email")}
                       className={inputCls}
+                      dir="ltr"
                       placeholder="du@unternehmen.de"
                     />
                   </div>
                   <div>
                     <label htmlFor="company" className="mb-2 block text-sm font-medium">
-                      Unternehmen <span className="text-ink-3">(optional)</span>
+                      {isAr ? "الشركة" : "Unternehmen"} <span className="text-ink-3">{isAr ? "(اختياري)" : "(optional)"}</span>
                     </label>
                     <input
                       id="company"
@@ -403,12 +489,12 @@ function Flow() {
                       value={fields.company}
                       onChange={set("company")}
                       className={inputCls}
-                      placeholder="Firma oder Marke"
+                      placeholder={isAr ? "اسم الشركة أو العلامة" : "Firma oder Marke"}
                     />
                   </div>
                   <div>
                     <label htmlFor="phone" className="mb-2 block text-sm font-medium">
-                      Telefon <span className="text-ink-3">(optional)</span>
+                      {isAr ? "الهاتف" : "Telefon"} <span className="text-ink-3">{isAr ? "(اختياري)" : "(optional)"}</span>
                     </label>
                     <input
                       id="phone"
@@ -418,29 +504,49 @@ function Flow() {
                       value={fields.phone}
                       onChange={set("phone")}
                       className={inputCls}
+                      dir="ltr"
                       placeholder="+49 …"
                     />
                   </div>
                 </div>
 
                 <p className="mt-6 text-xs leading-relaxed text-ink-3">
-                  Mit dem Absenden stimmst du der Verarbeitung deiner Angaben zur
-                  Bearbeitung der Anfrage zu. Details in der{" "}
-                  <Link href="/datenschutz" className="underline underline-offset-2 hover:text-ink">
-                    Datenschutzerklärung
-                  </Link>
-                  .
+                  {isAr ? (
+                    <>
+                      بالإرسال، فإنك توافق على معالجة بياناتك من أجل تنفيذ طلبك. التفاصيل في{" "}
+                      <Link href={withLocale("/datenschutz", locale)} className="underline underline-offset-2 hover:text-ink">
+                        سياسة الخصوصية
+                      </Link>
+                      .
+                    </>
+                  ) : (
+                    <>
+                      Mit dem Absenden stimmst du der Verarbeitung deiner Angaben zur
+                      Bearbeitung der Anfrage zu. Details in der{" "}
+                      <Link href="/datenschutz" className="underline underline-offset-2 hover:text-ink">
+                        Datenschutzerklärung
+                      </Link>
+                      .
+                    </>
+                  )}
                 </p>
 
                 <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4">
                   <button
                     type="submit"
-                    className="group inline-flex items-center justify-center gap-2.5 rounded bg-ink px-7 py-3.5 font-heading text-sm font-bold tracking-wide text-ink transition-colors hover:bg-paper-2"
+                    disabled={submitting || sent === "success"}
+                    className="group inline-flex items-center justify-center gap-2.5 rounded bg-[#1B103F] px-7 py-3.5 font-heading text-sm font-bold tracking-wide text-white shadow-[0_8px_24px_rgba(27,16,63,0.18)] transition-colors hover:bg-[#2A1760] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-[#1B103F]"
                   >
-                    Anfrage senden
+                    {submitting
+                      ? isAr
+                        ? "جارٍ الإرسال..."
+                        : "Wird gesendet..."
+                      : isAr
+                        ? "إرسال الطلب"
+                        : "Anfrage senden"}
                     <Arrow
                       color="currentColor"
-                      className="transition-transform duration-200 group-hover:translate-x-1"
+                      className={`transition-transform duration-200 ${arrowMirror} group-hover:translate-x-1`}
                     />
                   </button>
                   <button
@@ -448,24 +554,50 @@ function Flow() {
                     onClick={submitWhatsapp}
                     className="text-sm text-whatsapp underline underline-offset-4 transition-colors hover:text-ink"
                   >
-                    Lieber per WhatsApp schicken
+                    {isAr ? "تفضل الإرسال عبر واتساب" : "Lieber per WhatsApp schicken"}
                   </button>
                   <button
                     type="button"
                     onClick={() => go(1)}
                     className="text-sm text-ink-3 underline underline-offset-4 transition-colors hover:text-ink"
                   >
-                    Zurück
+                    {isAr ? "رجوع" : "Zurück"}
                   </button>
                 </div>
 
-                {sent && (
-                  <p role="status" className="mt-6 border-l-2 border-mint pl-4 text-sm leading-relaxed text-ink-3">
-                    {sent === "mail"
-                      ? "Dein E-Mail-Programm öffnet sich mit der fertigen Anfrage, einmal absenden, dann ist sie bei uns."
+                {sent === "whatsapp" && (
+                  <p role="status" className="mt-6 border-l-2 rtl:border-l-0 rtl:border-r-2 pl-4 rtl:pl-0 rtl:pr-4 border-mint text-sm leading-relaxed text-ink-3">
+                    {isAr
+                      ? "سيفتح واتساب برسالتك جاهزة، أرسلها وستصل إلينا."
                       : "WhatsApp öffnet sich mit der fertigen Nachricht, einmal absenden, dann ist sie bei uns."}{" "}
-                    Klappt das nicht, erreichst du uns direkt unter{" "}
-                    <a href={`mailto:${site.email}`} className="text-ink underline underline-offset-2">
+                    {isAr ? "إذا لم يعمل ذلك، يمكنك التواصل معنا مباشرة عبر " : "Klappt das nicht, erreichst du uns direkt unter "}
+                    <a href={`mailto:${site.email}`} className="text-ink underline underline-offset-2" dir="ltr">
+                      {site.email}
+                    </a>
+                    .
+                  </p>
+                )}
+
+                {sent === "success" && (
+                  <p role="status" className="mt-6 border-l-2 rtl:border-l-0 rtl:border-r-2 pl-4 rtl:pl-0 rtl:pr-4 border-mint text-sm leading-relaxed">
+                    <span className="block font-heading font-bold text-ink">
+                      {isAr ? "تم إرسال طلبك بنجاح." : "Deine Anfrage wurde erfolgreich gesendet."}
+                    </span>
+                    <span className="mt-1 block text-ink-3">
+                      {isAr
+                        ? "شكرًا لتواصلك معنا. استلمنا طلبك وسنعود إليك في أقرب وقت ممكن."
+                        : "Vielen Dank für deine Anfrage. Wir haben deine Nachricht erhalten und melden uns so schnell wie möglich."}
+                    </span>
+                  </p>
+                )}
+
+                {sent === "error" && (
+                  <p role="status" className="mt-6 border-l-2 rtl:border-l-0 rtl:border-r-2 pl-4 rtl:pl-0 rtl:pr-4 border-red-400 text-sm leading-relaxed text-ink-3">
+                    {isAr
+                      ? "تعذر إرسال الطلب. يرجى المحاولة مرة أخرى."
+                      : "Die Anfrage konnte nicht gesendet werden. Bitte versuche es erneut."}{" "}
+                    {isAr ? "أو تواصل معنا مباشرة عبر " : "Oder erreichst du uns direkt unter "}
+                    <a href={`mailto:${site.email}`} className="text-ink underline underline-offset-2" dir="ltr">
                       {site.email}
                     </a>
                     .
@@ -480,14 +612,14 @@ function Flow() {
   );
 }
 
-export function InquiryFlow() {
+export function InquiryFlow({ locale = "de" }: { locale?: Locale }) {
   return (
     <Suspense
       fallback={
         <div className="h-[28rem]" aria-hidden="true" />
       }
     >
-      <Flow />
+      <Flow locale={locale} />
     </Suspense>
   );
 }

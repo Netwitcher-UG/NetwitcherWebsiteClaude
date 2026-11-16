@@ -1,3 +1,4 @@
+import { media } from "./media";
 import type { AccentColor } from "./services";
 
 /* ------------------------------------------------------------------------
@@ -72,6 +73,10 @@ export type PortfolioProject = {
   featured?: boolean;
   /** Optionales Kundenlogo (SVG/PNG, einfarbig weiß wirkt am besten). */
   logo?: string;
+  /** Rendert statt `logo` das echte Netwitcher-Markenzeichen
+   *  (`components/brand/Logo.tsx`, dieselben Vektoren wie im Header) — nur
+   *  fürs eigene Netwitcher-Case-Study sinnvoll. */
+  useBrandLogo?: boolean;
   cover: MediaImage;
   /** Website-Projekte: Screenshots werden in Browser-/Phone-Rahmen gezeigt. */
   website?: {
@@ -86,6 +91,199 @@ export type PortfolioProject = {
   socialPosts?: MediaImage[];
   /** Software / Plattformen / Dashboards. */
   screens?: MediaImage[];
+  /** Zeigt das Auftaktbild (Composition aus `screens[0]`) vollständig via
+   *  `object-fit: contain` statt beschnitten via `cover` — für Bilder,
+   *  deren Seitenverhältnis nicht in das Standard-16/10-Raster passt. */
+  heroContain?: boolean;
+  /** Kuratierte Erzähl-Kapitel der Case Study: Titel, optionaler Text und
+   *  Bilder (auch reine Text-Kapitel sind erlaubt, `screens: []`). Ist dies
+   *  gesetzt, ersetzt es den Screens-Abschnitt der Detailseite; `screens`
+   *  dient dann nur noch den Kompositionen. */
+  screenSections?: {
+    title: string;
+    body?: string | string[];
+    screens: MediaImage[];
+    /** Social-Reels (z. B. Instagram): natives Instagram-Embed
+     *  (`blockquote.instagram-media`), Instagram steuert die Darstellung. */
+    reels?: { href: string }[];
+  }[];
+  /** Featured-Galerie: ein grosses Bild + Thumbnail-Slider darunter (ersetzt
+   *  `screenSections`/`screens` auf der Detailseite, wenn gesetzt). Erster
+   *  Eintrag ist das Bild, das standardmässig gross angezeigt wird. */
+  gallery?: { label: string; image: MediaImage }[];
+  /** Zeigt die `gallery`-Screenshots (grosses Bild + Thumbnails) innerhalb
+   *  eines Laptop-Bildschirm-Rahmens statt als plane Screenshots. */
+  galleryFrame?: "laptop";
+  /** Zeigt das Cover-Bild in der Portfolio-Hero-Filmrolle vollständig via
+   *  `object-fit: contain` statt beschnitten via `cover` — für Cover-Bilder,
+   *  deren Seitenverhältnis nicht exakt in die Kachel passt. */
+  stripFit?: "contain";
+  /** Eigener Funktionen-Abschnitt (Eyebrow, Überschrift, Intro + Karten mit
+   *  Icon/Titel/Beschreibung), rein textbasiert — kein Bild. Rendert direkt
+   *  vor `gallery`/`screenSections`/`screens`, wenn gesetzt. */
+  features?: {
+    eyebrow?: string;
+    heading?: string;
+    intro?: string;
+    /** Eigener Akzentfarben-Zyklus (Hex) für die Karten, z. B. eine
+     *  Markenfarbe ausserhalb der 5 Logo-Stern-Farben. Fehlt er, wird der
+     *  Standard-Zyklus aus den Logo-Stern-Farben verwendet. */
+    accentColors?: string[];
+    items: {
+      icon:
+        | "users"
+        | "calendar-check"
+        | "book"
+        | "message-circle"
+        | "bar-chart"
+        | "shield-check"
+        | "inbox"
+        | "calendar"
+        | "sliders"
+        | "map-pin"
+        | "list-checks"
+        | "package";
+      title: string;
+      description: string;
+    }[];
+  };
+  /** TikTok-Shop-Reichweite/Traffic-Abschnitt — zeigt bewusst NUR
+   *  Impressionen/Klicks/CTR und Traffic-Quellen, niemals Umsatz-,
+   *  Bestell- oder Kundenzahlen. Rendert direkt vor `servicesSection`. */
+  tiktokShopSection?: {
+    eyebrow: string;
+    heading: string;
+    /** Zeitraum, z. B. "01. April 2026 – 27. September 2026". */
+    period: string;
+    intro: string;
+    kpis: {
+      icon: "eye" | "cursor-click" | "percent";
+      value: number;
+      /** "percent": value wird direkt mit "%" angezeigt (kein M/K-Kompaktformat). */
+      unit?: "percent";
+      label: string;
+    }[];
+    traffic: {
+      heading: string;
+      intro: string;
+      impressionsUnit: string;
+      clicksUnit: string;
+      sources: { label: string; impressions: number; clicks: number }[];
+    };
+    summary: { label: string; body: string };
+  };
+  /** Kaufland-Marktplatz-Performance-Abschnitt — zeigt bewusst NUR
+   *  Sichtbarkeits-/Qualitäts-/Positionierungskennzahlen, niemals Umsatz-,
+   *  Bestell- oder Conversion-Daten. Rendert direkt nach `tiktokShopSection`
+   *  und vor `servicesSection`. */
+  kauflandSection?: {
+    eyebrow: string;
+    heading: string;
+    /** Zeitraum, z. B. "Letzte 12 Monate". */
+    period: string;
+    intro: string;
+    /** `value` ist bereits lokal formatiert (Dezimaltrennzeichen/Leerzeichen
+     *  vor "%" je Sprache), damit hier keine Formatierungslogik nötig ist. */
+    kpis: {
+      icon: "target" | "search" | "percent" | "package";
+      value: string;
+      label: string;
+      supporting?: string;
+    }[];
+    /** Kompakte 3-Indikatoren-Visualisierung unterhalb der KPI-Karten.
+     *  `buyBoxPct` ist die einzige echte, numerisch nutzbare Prozentzahl
+     *  (Ring-Füllung) — Suchposition/Retourenquote werden bewusst NICHT
+     *  als proportionale Balken dargestellt (irreführend bzw. verzerrend). */
+    visual: {
+      buyBoxPct: number;
+      buyBoxDisplay: string;
+      buyBoxLabel: string;
+      searchPositionDisplay: string;
+      searchPositionLabel: string;
+      returnRateDisplay: string;
+      returnRateLabel: string;
+    };
+    secondaryHeading: string;
+    secondaryText: string;
+    summary: { label: string; body: string };
+  };
+  /** Amazon-Marktplatz-Performance-Abschnitt — zeigt bewusst NUR prozentuale
+   *  Effizienzkennzahlen (ACoS, Gebühren, Fulfilment, Retouren), niemals
+   *  €-Beträge, Umsatz, Bestellzahlen oder Profitabilität. Rendert direkt
+   *  nach `kauflandSection` und vor `servicesSection`. */
+  amazonSection?: {
+    eyebrow: string;
+    heading: string;
+    intro: string;
+    /** `value` ist bereits lokal formatiert (Dezimaltrennzeichen/Leerzeichen
+     *  vor "%" je Sprache), damit hier keine Formatierungslogik nötig ist. */
+    kpis: {
+      icon: "trending-up" | "percent" | "package" | "shield-check";
+      value: string;
+      label: string;
+      supporting?: string;
+    }[];
+    /** 4 unabhängige Radial-Indikatoren (jeweils eigene 0–100-Skala) —
+     *  bewusst NICHT als Teile eines gemeinsamen Ganzen/Kreisdiagramms
+     *  dargestellt, da die Kennzahlen inhaltlich nicht zusammengehören. */
+    visual: { pct: number; display: string; label: string }[];
+    secondaryHeading: string;
+    secondaryText: string;
+    summary: { label: string; body: string };
+  };
+  /** Eigener Leistungen-Abschnitt (Eyebrow, Überschrift, Intro-Absätze,
+   *  Karten mit Icon/Titel/Beschreibung, optionale Abschluss-Aussage) —
+   *  unabhängig von `features`: rendert am Seitenende, nach dem übrigen
+   *  Projektinhalt und vor Next-Project/CTA. */
+  servicesSection?: {
+    eyebrow?: string;
+    heading?: string;
+    intro?: string | string[];
+    /** Eigener Akzentfarben-Zyklus (Hex). Fehlt er, wird `color` des
+     *  Projekts einheitlich für alle Karten verwendet. */
+    accentColors?: string[];
+    items: {
+      icon:
+        | "shopping-bag"
+        | "share"
+        | "video"
+        | "target"
+        | "trending-up"
+        | "shopping-cart"
+        | "laptop"
+        | "monitor"
+        | "app-window"
+        | "search"
+        | "palette";
+      title: string;
+      description: string;
+    }[];
+    closingStatement?: string;
+  };
+  /** Eigener Reels-Abschnitt mit Eyebrow/Überschrift/Intro (anders als die
+   *  numerierten `screenSections`-Kapitel) — nutzt dieselbe ReelGallery/
+   *  Instagram-Embed-Karte. Rendert nach `servicesSection`. */
+  reelsSection?: {
+    eyebrow?: string;
+    heading?: string;
+    intro?: string;
+    reels: { href: string }[];
+  };
+  /** Kunden-Logowand: leitet die Logos automatisch aus `portfolioProjects`
+   *  ab (alle Projekte mit `logo`, ausser dem eigenen) — keine zweite,
+   *  separat zu pflegende Liste. Rendert nach `servicesSection`. */
+  clientsSection?: {
+    eyebrow?: string;
+    heading?: string;
+    intro?: string;
+  };
+  /** Grosse, zentrierte Marken-Aussage vor Next-Project/CTA. */
+  brandStatement?: {
+    heading: string;
+    body?: string;
+  };
+  /** Branche des Kunden, erscheint in den Projekt-Metadaten. */
+  industry?: string;
   /** Kurze Story in Kapiteln, z. B. Ausgangslage · Ansatz · Umsetzung. */
   story?: { heading: string; body: string }[];
   /** Nur echte, freigegebene Zahlen eintragen. */
@@ -97,6 +295,13 @@ export type PortfolioProject = {
   tech?: string[];
   /** true, solange Texte/Medien noch nicht die echten Projektinhalte sind. */
   placeholder?: boolean;
+  /** Blendet die grosse Naechstes-Projekt-Buehne am Seitenende aus
+   *  (z. B. wenn sie inhaltlich mit der Case Study kollidieren wuerde). */
+  hideNextProject?: boolean;
+  /** Blendet die "DAS PRODUKT."-Anzeige der `screens` im Inhaltsbereich aus
+   *  (z. B. wenn `screens` nur fuer das Auftaktbild dient und keine zweite,
+   *  redundante Anzeige derselben Komposition gewuenscht ist). */
+  hideScreensShowcase?: boolean;
 };
 
 /* ------------------------------------------------------------------------
@@ -108,118 +313,673 @@ export type PortfolioProject = {
 
 export const portfolioProjects: PortfolioProject[] = [
   {
-    slug: "frida-eu",
-    client: "FRIDA EU",
-    title: "Digitaler Markenauftritt",
+    slug: "fekrahub",
+    client: "FekraHub",
+    title: "Schulmanagement neu gedacht",
     description:
-      "Projektbeschreibung folgt: In ein bis zwei Sätzen, was für FRIDA EU entstanden ist und welches Ziel es hatte.",
-    year: 2025,
-    categories: ["web", "design"],
-    services: ["Webdesign", "Branding", "Content"],
-    color: "mint",
+      "Eine cloudbasierte Plattform für arabischsprachige Schulen in Europa, die Verwaltung, Lehrkräfte, Schüler und Eltern in einem zentralen System verbindet.",
+    year: "seit 2023",
+    categories: ["software"],
+    services: ["UI/UX Design", "Webanwendung", "SaaS-Entwicklung"],
+    industry: "EdTech",
+    color: "violet",
     featured: true,
-    placeholder: true,
-    cover: { alt: "FRIDA EU, Titelmotiv des Projekts", ratio: "16/10" },
-    website: {
-      // url: "https://…",
-      desktop: { alt: "FRIDA EU, Website auf dem Desktop", ratio: "16/10" },
-      mobile: { alt: "FRIDA EU, Website auf dem Smartphone", ratio: "9/16" },
+    logo: "/portfolio/fekrahub/logo.png",
+    cover: {
+      src: "/portfolio/fekrahub/hero-image-fekrahub.webp",
+      alt: "FekraHub, Übersicht der Schulmanagement-Plattform",
+      ratio: "16/10",
     },
-    images: [
-      { alt: "FRIDA EU, Markenanwendung", ratio: "4/5" },
-      { alt: "FRIDA EU, Detail des Designsystems", ratio: "1/1" },
-      { alt: "FRIDA EU, Bildwelt", ratio: "16/10" },
+    /* Kompositionen (Auftaktbild, Featured-Bühne, Filmstreifen) */
+    screens: [
+      {
+        src: "/portfolio/fekrahub/hero-image-fekrahub.webp",
+        alt: "FekraHub, Schulmanagement-Plattform auf Laptop, Tablet und Smartphone",
+        ratio: "16/10",
+      },
+    ],
+    features: {
+      eyebrow: "WARUM FEKRAHUB",
+      heading: "ZENTRALE FUNKTIONEN",
+      intro: "Alles, was Schulen für einen einfachen, vernetzten Alltag brauchen – in einer Plattform.",
+      items: [
+        { icon: "users", title: "Schülerverwaltung", description: "Schüler, Klassen und Profile zentral verwalten." },
+        { icon: "calendar-check", title: "Anwesenheit & Noten", description: "Anwesenheit erfassen und Leistungen übersichtlich verwalten." },
+        { icon: "book", title: "Unterricht & Aufgaben", description: "Unterricht, Hausaufgaben und Lerninhalte einfach organisieren." },
+        { icon: "message-circle", title: "Kommunikation", description: "Verwaltung, Lehrkräfte, Eltern und Schüler direkt verbinden." },
+        { icon: "bar-chart", title: "Berichte & Auswertungen", description: "Schuldaten übersichtlich auswerten und Berichte erstellen." },
+        { icon: "shield-check", title: "Rollen & Zugriffsrechte", description: "Zugriffe passend für Verwaltung, Lehrkräfte und Mitarbeitende steuern." },
+      ],
+    },
+    /* Featured-Galerie: grosses Bild + Thumbnail-Slider darunter */
+    gallery: [
+      { label: "Anwesenheitsliste", image: { src: "/portfolio/fekrahub/gallery-attendance.webp", alt: "FekraHub, exportierte Anwesenheitsliste als PDF", ratio: "4/3" } },
+      { label: "Kommunikation", image: { src: "/portfolio/fekrahub/gallery-messages.webp", alt: "FekraHub, Nachrichten und Dateiversand", ratio: "4/3" } },
+      { label: "Kursunterlagen", image: { src: "/portfolio/fekrahub/gallery-course-files.webp", alt: "FekraHub, Kursunterlagen und Materialien", ratio: "4/3" } },
+      { label: "Rollen & Berechtigungen", image: { src: "/portfolio/fekrahub/gallery-roles.webp", alt: "FekraHub, Nutzerrollen & Berechtigungen", ratio: "4/3" } },
+      { label: "Kalender", image: { src: "/portfolio/fekrahub/gallery-calendar.webp", alt: "FekraHub, Kurskalender mit Filtern", ratio: "4/3" } },
     ],
     story: [
       {
-        heading: "Ausgangslage",
-        body: "Platzhalter: Wo stand die Marke, was hat gefehlt, was war das Ziel?",
+        heading: "Die Herausforderung",
+        body: "Viele Schulen nutzen getrennte Systeme für Anwesenheit, Noten, Stundenpläne, Aufgaben und Kommunikation. Das macht den Schulalltag unnötig komplex.",
       },
       {
-        heading: "Umsetzung",
-        body: "Platzhalter: Was genau wurde entwickelt, gestaltet oder produziert, und warum so?",
+        heading: "Die Lösung",
+        body: "FekraHub bündelt alle wichtigen Schulprozesse in einer zentralen Plattform mit rollenbasierten Zugängen für Verwaltung, Lehrkräfte, Schüler und Eltern.",
+      },
+      {
+        heading: "Zentrale Funktionen",
+        body: "Schüler- & Personalverwaltung · Anwesenheit & Noten · Hausaufgaben & Unterricht · Stundenpläne · Eltern- & Schüler-Dashboards · Kommunikation & Berichte",
+      },
+      {
+        heading: "Das Ergebnis",
+        body: "Eine übersichtliche, vernetzte Schulplattform, die Verwaltungsprozesse vereinfacht und Informationen für alle Beteiligten zentral zugänglich macht.",
       },
     ],
+    links: [{ label: "Mehr zu FekraHub", href: "/produkte/fekrahub" }],
+    servicesSection: {
+      eyebrow: "UNSERE LEISTUNGEN",
+      heading: "VON DER IDEE ZUR DIGITALEN PLATTFORM",
+      intro:
+        "Für FekraHub haben wir Markenauftritt, digitale Produktentwicklung und Content miteinander verbunden – von der Website bis zur leistungsfähigen Web Application und visuellen Kommunikation.",
+      accentColors: ["#0FB9F2", "#8B5CF6", "#0FB9F2"],
+      items: [
+        {
+          icon: "monitor",
+          title: "Webdesign & Entwicklung",
+          description: "Konzeption und Entwicklung einer modernen Website, die FekraHub klar positioniert und die Plattform verständlich präsentiert.",
+        },
+        {
+          icon: "app-window",
+          title: "Software / Web Application",
+          description: "Entwicklung einer zentralen Web Application für Schulverwaltung, Kommunikation, Unterricht und digitale Prozesse.",
+        },
+        {
+          icon: "video",
+          title: "Videoproduktion",
+          description: "Produktion visueller Inhalte und Videos, die Funktionen, Vorteile und Anwendungsmöglichkeiten von FekraHub verständlich vermitteln.",
+        },
+      ],
+      closingStatement:
+        "Design, Technologie und Content greifen bei FekraHub ineinander – für eine digitale Plattform, die nicht nur leistungsfähig funktioniert, sondern auch klar kommuniziert und professionell präsentiert wird.",
+    },
+  },
+  {
+    slug: "frida-eu",
+    client: "FridaEU",
+    title: "Digitale E-Commerce-Erfahrung für eine moderne Home-Fragrance-Marke",
+    description:
+      "FridaEU ist eine Marke für Raumdüfte und duftende Reinigungsprodukte. Ziel war es, ein digitales Einkaufserlebnis zu entwickeln, das Duftentdeckung, Markenstory und Commerce miteinander verbindet.",
+    year: 2025,
+    categories: ["ecommerce", "web", "design"],
+    services: ["E-Commerce", "Markenerlebnis", "Webdesign"],
+    color: "sky",
+    featured: true,
+    logo: "/portfolio/frida-eu/logo.webp",
+    cover: {
+      src: "/portfolio/frida-eu/device-showcase.webp",
+      alt: "FridaEU, Online-Shop auf Laptop, Tablet und Smartphone – echte Screenshots der Website",
+      ratio: "16/10",
+    },
+    screenSections: [
+      {
+        title: "Social Content & Brand Building",
+        body: [
+          "Neben dem Online-Shop wurde FridaEU durch kreative Social-Media-Inhalte unterstützt.",
+          "Videoformate für Instagram und TikTok verbinden Unterhaltung, Produktinszenierung und Markenkommunikation und stärken die Verbindung zur Community.",
+        ],
+        screens: [],
+        reels: [
+          { href: "https://www.instagram.com/reel/DbgOB2qDKIK/" },
+          { href: "https://www.instagram.com/reel/DcQcFE9gJEf/" },
+          { href: "https://www.instagram.com/reel/DVHBZEmEbrY/" },
+          { href: "https://www.instagram.com/reel/DU3kdkXijd2/" },
+          { href: "https://www.instagram.com/reel/DbdpUKZD6dM/" },
+        ],
+      },
+      {
+        title: "Das Ergebnis",
+        body: "FridaEU wurde von einem klassischen Online-Shop zu einer digitalen Markenplattform entwickelt, die Duftentdeckung, E-Commerce und Brand Experience in einer modernen Customer Journey vereint.",
+        screens: [],
+      },
+    ],
+    story: [
+      {
+        heading: "Die Herausforderung",
+        body: "Düfte sind emotionale Produkte – online fehlt jedoch das direkte Erlebnis des Geruchs. Die Herausforderung bestand darin, verschiedene Duftwelten verständlich zu präsentieren, Vertrauen aufzubauen und Kunden einfach zum passenden Produkt zu führen.",
+      },
+      {
+        heading: "Die Lösung",
+        body: "Wir entwickelten einen modernen E-Commerce-Shop mit starkem visuellen Storytelling und einer klaren Customer Journey. Produkte werden über Duftwelten, Anwendungsbereiche und individuelle Bundles erlebbar gemacht, sodass Kunden einfacher entdecken, vergleichen und kaufen können.",
+      },
+      {
+        heading: "Experience & Features",
+        body: "Duftwelten für eine intuitive Produktauswahl · Produktorientiertes Shopping-Erlebnis · Individuell zusammenstellbare Duft-Bundles · Mobile-first Commerce · Brand Storytelling & Social Content Integration · Mehrsprachige Nutzererfahrung",
+      },
+    ],
+    hideNextProject: true,
+    links: [{ label: "Website besuchen", href: "https://fridaeu.com" }],
+    tiktokShopSection: {
+      eyebrow: "TIKTOK SHOP · PERFORMANCE",
+      heading: "Reichweite, die messbares Interesse schafft",
+      period: "01. April 2026 – 27. September 2026",
+      intro:
+        "Durch die Betreuung des TikTok Shops, gezielten Content und die intelligente Verknüpfung verschiedener Traffic-Quellen haben wir die Sichtbarkeit der FridaEU-Produkte deutlich ausgebaut. Von April bis September 2026 erzielten die Produkte Millionen von Impressionen und Hunderttausende Klicks innerhalb des TikTok Shops.",
+      kpis: [
+        { icon: "eye", value: 15767048, label: "Produkt-Impressionen" },
+        { icon: "eye", value: 9555097, label: "Einzigartige Produkt-Impressionen" },
+        { icon: "cursor-click", value: 435826, label: "Produktklicks" },
+        { icon: "cursor-click", value: 293119, label: "Einzigartige Klicks" },
+        { icon: "percent", value: 2.76, unit: "percent", label: "Klickrate" },
+        { icon: "percent", value: 3.07, unit: "percent", label: "Einzigartige Klickrate" },
+      ],
+      traffic: {
+        heading: "Woher kam die Aufmerksamkeit?",
+        intro:
+          "Die Produktreichweite verteilte sich auf mehrere Touchpoints innerhalb des TikTok-Shop-Ökosystems – von Affiliate-Traffic über Produktkarten und Videos bis hin zu LIVE.",
+        impressionsUnit: "Impressionen",
+        clicksUnit: "Klicks",
+        sources: [
+          { label: "Affiliate", impressions: 7944781, clicks: 288421 },
+          { label: "Produktkarten", impressions: 7229969, clicks: 132292 },
+          { label: "Seller Videos", impressions: 565967, clicks: 14911 },
+          { label: "Seller LIVE", impressions: 26331, clicks: 202 },
+        ],
+      },
+      summary: {
+        label: "Das Ergebnis",
+        body: "Mehr als 15,7 Millionen Produkt-Impressionen und 435.000 Klicks in weniger als sechs Monaten – mit Reichweite über mehrere TikTok-Shop-Touchpoints hinweg.",
+      },
+    },
+    kauflandSection: {
+      eyebrow: "KAUFLAND · MARKETPLACE PERFORMANCE",
+      heading: "Starke Präsenz und stabile Performance auf Kaufland",
+      period: "Letzte 12 Monate",
+      intro:
+        "Unsere Arbeit für FridaEU endet nicht beim Shop und Content. Auch auf Kaufland optimieren wir die Sichtbarkeit und Qualität der Produktpräsenz – von strukturierten Listings über die Auffindbarkeit in der Suche bis zur stabilen BuyBox-Performance.",
+      kpis: [
+        {
+          icon: "target",
+          value: "100 %",
+          label: "BuyBox-Anteil",
+          supporting: "Volle BuyBox-Präsenz innerhalb der verfügbaren Daten.",
+        },
+        {
+          icon: "search",
+          value: "33,1",
+          label: "Ø Suchposition",
+          supporting: "Durchschnittliche Position der Produkte in der Kaufland-Suche.",
+        },
+        {
+          icon: "percent",
+          value: "0,6 %",
+          label: "Retourenquote",
+          supporting: "Niedrige Retourenquote als Qualitätsindikator.",
+        },
+        {
+          icon: "package",
+          value: "52",
+          label: "Produkte in der Analyse",
+          supporting: "Breites FridaEU-Sortiment innerhalb der ausgewerteten Daten.",
+        },
+      ],
+      visual: {
+        buyBoxPct: 100,
+        buyBoxDisplay: "100 %",
+        buyBoxLabel: "BuyBox-Anteil",
+        searchPositionDisplay: "33,1",
+        searchPositionLabel: "Ø Suchposition",
+        returnRateDisplay: "0,6 %",
+        returnRateLabel: "Retourenquote",
+      },
+      secondaryHeading: "Mehr als Produkte nur einzustellen",
+      secondaryText:
+        "Wir optimieren die Marketplace-Präsenz laufend – von strukturierten Produktdaten und Sichtbarkeit bis zur BuyBox-Positionierung und Qualitätskontrolle.",
+      summary: {
+        label: "Das Ergebnis",
+        body: "100 % BuyBox-Anteil, eine durchschnittliche Suchposition von 33,1 und eine Retourenquote von nur 0,6 % – starke Signale für eine stabile und professionell betreute Präsenz von FridaEU auf Kaufland.",
+      },
+    },
+    amazonSection: {
+      eyebrow: "AMAZON · MARKETPLACE PERFORMANCE",
+      heading: "Effizientere Performance auf Amazon",
+      intro:
+        "Für FridaEU steuern wir die Amazon-Präsenz datenbasiert – mit Fokus auf Werbeeffizienz, operative Kosten und eine stabile Produktperformance. So lassen sich Entscheidungen gezielter treffen und die Effizienz des Accounts laufend optimieren.",
+      kpis: [
+        {
+          icon: "trending-up",
+          value: "9,72 %",
+          label: "Advertising Cost of Sales (ACoS)",
+          supporting: "Kennzahl zur Bewertung der Werbeeffizienz auf Amazon.",
+        },
+        {
+          icon: "percent",
+          value: "15,65 %",
+          label: "Verkaufsgebühren",
+          supporting: "Anteil der Amazon-Verkaufsgebühren innerhalb des ausgewerteten Zeitraums.",
+        },
+        {
+          icon: "package",
+          value: "0,03 %",
+          label: "Fulfilment-Kosten",
+          supporting: "Niedriger Kostenanteil für die Auftragsabwicklung.",
+        },
+        {
+          icon: "shield-check",
+          value: "0,07 %",
+          label: "Retouren & Recovery",
+          supporting: "Niedriger Anteil von Rückgabe- und Recovery-Prozessen.",
+        },
+      ],
+      visual: [
+        { pct: 9.72, display: "9,72 %", label: "Advertising Cost of Sales (ACoS)" },
+        { pct: 15.65, display: "15,65 %", label: "Verkaufsgebühren" },
+        { pct: 0.03, display: "0,03 %", label: "Fulfilment-Kosten" },
+        { pct: 0.07, display: "0,07 %", label: "Retouren & Recovery" },
+      ],
+      secondaryHeading: "Effizienz kontinuierlich im Blick",
+      secondaryText:
+        "Wir verbinden Werbeperformance, operative Kosten und Produktdaten, um die Amazon-Präsenz laufend zu optimieren und Entscheidungen auf einer belastbaren Datengrundlage zu treffen.",
+      summary: {
+        label: "Das Ergebnis",
+        body: "Ein ACoS von 9,72 % bei gleichzeitig niedrigen Fulfilment- und Retourenquoten – starke Effizienzsignale für die betreute Amazon-Präsenz von FridaEU.",
+      },
+    },
+    servicesSection: {
+      eyebrow: "UNSERE LEISTUNGEN",
+      heading: "VON E-COMMERCE BIS PERFORMANCE MARKETING",
+      intro: [
+        "Für FridaEU haben wir nicht nur einen Online-Shop entwickelt, sondern ein ganzheitliches digitales Ökosystem aufgebaut, das Marke, Content, Commerce und Performance Marketing miteinander verbindet.",
+        "Von der technischen E-Commerce-Basis über Social Content bis hin zu Paid Ads und Social Commerce begleiten wir die Marke entlang der gesamten digitalen Customer Journey.",
+      ],
+      items: [
+        {
+          icon: "shopping-bag",
+          title: "E-Commerce Online Shop",
+          description: "Ein conversion-orientierter Online-Shop, der Produktentdeckung, Markenwelt und einen einfachen Kaufprozess miteinander verbindet.",
+        },
+        {
+          icon: "share",
+          title: "Social Media Marketing",
+          description: "Strategische Social-Media-Kommunikation für mehr Sichtbarkeit, Markenbindung und eine aktive Community.",
+        },
+        {
+          icon: "video",
+          title: "Video & Reels Produktion",
+          description: "Kreative Videoformate und Reels, die Produkte emotional inszenieren und Aufmerksamkeit in sozialen Netzwerken erzeugen.",
+        },
+        {
+          icon: "target",
+          title: "Meta Ads",
+          description: "Performance-Kampagnen auf Facebook und Instagram mit Fokus auf Reichweite, Produktentdeckung und Conversions.",
+        },
+        {
+          icon: "trending-up",
+          title: "TikTok Ads",
+          description: "Plattformgerechte Kampagnen, die kreative Inhalte mit performance-orientierter Ausspielung verbinden.",
+        },
+        {
+          icon: "shopping-cart",
+          title: "TikTok Shop",
+          description: "Aufbau und Integration von Social Commerce, damit Produkte direkt dort entdeckt und gekauft werden können, wo Content konsumiert wird.",
+        },
+      ],
+      closingStatement:
+        "Nicht einzelne Maßnahmen, sondern ein vernetztes System: Shop, Content, Social Media und Paid Ads greifen ineinander und machen FridaEU digital sichtbar, erlebbar und kaufbar.",
+    },
   },
   {
     slug: "abziel",
     client: "ABZIEL",
     title: "Social Media & Reels",
     description:
-      "Projektbeschreibung folgt: Kanal, Formate und Ziel der Content-Produktion für ABZIEL.",
+      "ABZiel verbindet Bildung, Integration und berufliche Entwicklung in einer starken digitalen Marke. Mit einem modernen Webauftritt, strategischem Social Media Marketing und performance-orientierten Kampagnen machen wir Angebote sichtbar, schaffen Vertrauen und bringen Menschen gezielt mit den passenden Bildungs- und Coachingangeboten zusammen.",
     year: 2025,
     categories: ["social-video"],
-    services: ["Social Media", "Reels", "Videoproduktion"],
-    color: "pink",
-    placeholder: true,
-    cover: { alt: "ABZIEL, Titelmotiv des Projekts", ratio: "4/5" },
-    videos: [
-      { title: "Reel 01", source: "local", ratio: "9/16" },
-      { title: "Reel 02", source: "local", ratio: "9/16" },
-      { title: "Reel 03", source: "local", ratio: "9/16" },
-      { title: "Werbefilm", source: "youtube", ratio: "16/9" },
+    services: ["Webdesign", "Social Media Marketing", "Performance Marketing"],
+    color: "sky",
+    stripFit: "contain",
+    logo: "/portfolio/abziel/logo.png",
+    cover: {
+      src: "/portfolio/abziel/hero-abziel.webp",
+      alt: "ABZiel, Website auf Laptop, Tablet und Smartphone",
+      ratio: "16/9",
+    },
+    /* Kompositionen (Auftaktbild) */
+    screens: [
+      {
+        src: "/portfolio/abziel/hero-abziel.webp",
+        alt: "ABZiel, Website auf Laptop, Tablet und Smartphone",
+        ratio: "16/9",
+      },
     ],
-    socialPosts: [
-      { alt: "ABZIEL, Social-Media-Post", ratio: "4/5" },
-      { alt: "ABZIEL, Social-Media-Post", ratio: "4/5" },
-      { alt: "ABZIEL, Social-Media-Post", ratio: "1/1" },
-      { alt: "ABZIEL, Social-Media-Post", ratio: "4/5" },
+    heroContain: true,
+    screenSections: [
+      {
+        title: "Social Content & Sichtbarkeit",
+        body: [
+          "Neben dem neuen Webauftritt wird ABZiel durch kreative Social-Media-Inhalte sichtbar gemacht.",
+          "Kurze, aufmerksamkeitsstarke Reels vermitteln Bildungs- und Coachingangebote verständlich und stärken die Verbindung zur Zielgruppe auf Instagram.",
+        ],
+        screens: [],
+        reels: [
+          { href: "https://www.instagram.com/reel/DMN4j9Wqxvm/" },
+          { href: "https://www.instagram.com/reel/DWy6YdfjOSL/" },
+          { href: "https://www.instagram.com/reel/DWg4J9GCsat/" },
+          { href: "https://www.instagram.com/reel/DUgi9cvDPwy/" },
+          { href: "https://www.instagram.com/reel/DbYulPnMAxo/" },
+        ],
+      },
     ],
+    servicesSection: {
+      eyebrow: "UNSERE LEISTUNGEN",
+      heading: "DIGITALE SICHTBARKEIT, DIE VERBINDET",
+      intro:
+        "Für ABZiel haben wir Webdesign, Social Media und Performance Marketing zu einem ganzheitlichen digitalen Auftritt verbunden – mit dem Ziel, Bildungsangebote sichtbar zu machen, Vertrauen aufzubauen und neue Zielgruppen effektiv zu erreichen.",
+      accentColors: ["#0F85C0", "#292952", "#AA2422", "#0F85C0"],
+      items: [
+        {
+          icon: "share",
+          title: "Social Media Marketing",
+          description: "Strategische Inhalte und laufende Kommunikation, die ABZiel sichtbar machen und eine starke Verbindung zur Zielgruppe schaffen.",
+        },
+        {
+          icon: "monitor",
+          title: "Webdesign & Entwicklung",
+          description: "Konzeption und Entwicklung eines modernen Webauftritts, der Angebote verständlich präsentiert und Nutzer gezielt zur Kontaktaufnahme führt.",
+        },
+        {
+          icon: "target",
+          title: "Meta Ads",
+          description: "Performance-Kampagnen auf Facebook und Instagram zur gezielten Ansprache neuer Interessenten und zur Steigerung relevanter Anfragen.",
+        },
+        {
+          icon: "trending-up",
+          title: "TikTok Ads",
+          description: "Kreative, plattformgerechte Kampagnen, die Aufmerksamkeit schaffen und neue Zielgruppen über TikTok erreichen.",
+        },
+      ],
+      closingStatement:
+        "Website, Content und Performance Marketing greifen bei ABZiel ineinander – für mehr Sichtbarkeit, mehr Vertrauen und eine stärkere digitale Verbindung zwischen Bildungsangeboten und den Menschen, die sie brauchen.",
+    },
     // links: [{ label: "Instagram", href: "https://instagram.com/…" }],
   },
   {
-    slug: "rushdia-care",
-    client: "Rushdia Care",
-    title: "Website & Fotografie",
+    slug: "umzugly",
+    client: "Umzugly",
+    title: "Umzüge digital planen und verwalten",
     description:
-      "Projektbeschreibung folgt: Website, Bildwelt und Ziel des Projekts für Rushdia Care.",
-    year: 2024,
-    categories: ["web", "photo"],
-    services: ["Webdesign", "Fotografie", "Texte"],
-    color: "sky",
-    placeholder: true,
-    cover: { alt: "Rushdia Care, Titelmotiv des Projekts", ratio: "16/10" },
-    website: {
-      desktop: { alt: "Rushdia Care, Website auf dem Desktop", ratio: "16/10" },
-      mobile: { alt: "Rushdia Care, Website auf dem Smartphone", ratio: "9/16" },
-    },
-    images: [
-      { alt: "Rushdia Care, Fotografie", ratio: "3/2" },
-      { alt: "Rushdia Care, Fotografie", ratio: "4/5" },
-      { alt: "Rushdia Care, Fotografie", ratio: "4/5" },
-      { alt: "Rushdia Care, Fotografie", ratio: "3/2" },
-    ],
-  },
-  {
-    slug: "fekrahub",
-    client: "FekraHub",
-    title: "Plattform für Schulen",
-    description:
-      "Unsere eigene Verwaltungsplattform für Schulen: Anmeldungen, Kurse, Kommunikation und Berichte an einem Ort. Entwickelt und betrieben von Netwitcher.",
-    year: "seit 2023",
+      "Eine digitale Plattform, die den gesamten Umzugsprozess von der Anfrage und Datenerfassung bis zur Terminplanung und internen Verwaltung in einem zentralen System verbindet.",
+    year: 2025,
     categories: ["software"],
-    services: ["Produktdesign", "Webanwendung", "Plattform", "Betrieb"],
-    color: "violet",
-    featured: true,
-    placeholder: true,
-    cover: { alt: "FekraHub, Übersicht der Plattform", ratio: "16/10" },
+    services: ["UI/UX Design", "Webanwendung", "Buchungsprozess", "SaaS-Entwicklung"],
+    industry: "Moving & Logistics",
+    color: "pink",
+    heroContain: true,
+    galleryFrame: "laptop",
+    logo: "/portfolio/umzugly/logo.webp",
+    cover: {
+      src: "/portfolio/umzugly/hero-umzugly-v2.webp",
+      alt: "Umzugly, Übersicht der Umzugsplattform",
+      ratio: "16/9",
+    },
+    /* Kompositionen (Auftaktbild, Featured-Bühne, Filmstreifen) */
     screens: [
-      { alt: "FekraHub, Dashboard der Verwaltung", ratio: "16/10", caption: "Dashboard" },
-      { alt: "FekraHub, Kursverwaltung", ratio: "16/10", caption: "Kurse & Klassen" },
-      { alt: "FekraHub, Elternansicht auf dem Smartphone", ratio: "9/16", caption: "Elternansicht" },
-      { alt: "FekraHub, Berichte und Zeugnisse", ratio: "16/10", caption: "Berichte" },
+      {
+        src: "/portfolio/umzugly/hero-umzugly-v2.webp",
+        alt: "Umzugly, Umzugsplattform auf Laptop, Tablet und Smartphone",
+        ratio: "4/3",
+      },
+    ],
+    features: {
+      eyebrow: "WARUM UMZUGLY",
+      heading: "ZENTRALE FUNKTIONEN",
+      intro: "Ein digitaler Workflow für Anfrage, Planung und Verwaltung.",
+      accentColors: ["#E30613", "#F2684B", "#E30613", "#F4718C", "#E30613", "#F2684B"],
+      items: [
+        { icon: "inbox", title: "Umzugsanfragen", description: "Alle Anfragen und Status zentral verwalten." },
+        { icon: "calendar", title: "Terminplanung", description: "Umzugstermine übersichtlich im Kalender organisieren." },
+        { icon: "sliders", title: "Flexible Preislogik", description: "Leistungen und Preise individuell konfigurieren." },
+        { icon: "map-pin", title: "Einsatzgebiet & Distanz", description: "Servicegebiete und Entfernungen flexibel festlegen." },
+        { icon: "list-checks", title: "Geführter Anfrageprozess", description: "Kunden Schritt für Schritt durch den Umzug führen." },
+        { icon: "package", title: "Zusatzleistungen", description: "Services wie Verpackung, Montage oder Reinigung erfassen." },
+      ],
+    },
+    /* Featured-Galerie: grosses Bild + Thumbnail-Slider darunter */
+    gallery: [
+      { label: "Anfrageverwaltung", image: { src: "/portfolio/umzugly/gallery-request-overview.jpg", alt: "Umzugly, Übersicht aller Umzugsanfragen mit Status", ratio: "4/3" } },
+      { label: "Umzugsdetails", image: { src: "/portfolio/umzugly/gallery-moving-details.jpg", alt: "Umzugly, geführte Erfassung von Auszugsort und Umzugsdetails", ratio: "4/3" } },
+      { label: "Terminkalender", image: { src: "/portfolio/umzugly/gallery-calendar.jpg", alt: "Umzugly, interner Kalender mit Umzugsterminen", ratio: "4/3" } },
+      { label: "Zusatzleistungen", image: { src: "/portfolio/umzugly/gallery-additional-services.jpg", alt: "Umzugly, Auswahl von Zusatzleistungen wie Verpackung und Montage", ratio: "4/3" } },
+      { label: "Preiskonfiguration", image: { src: "/portfolio/umzugly/gallery-pricing-config.jpg", alt: "Umzugly, Konfiguration von Preisen und Leistungen", ratio: "4/3" } },
+      { label: "Einzugsort", image: { src: "/portfolio/umzugly/gallery-destination.jpg", alt: "Umzugly, Erfassung des Einzugsorts im Anfrageprozess", ratio: "4/3" } },
+      { label: "Zusatzleistungen (Einzug)", image: { src: "/portfolio/umzugly/gallery-move-in-services.jpg", alt: "Umzugly, Auswahl von Zusatzleistungen für den Einzug", ratio: "4/3" } },
+      { label: "Servicegebiet", image: { src: "/portfolio/umzugly/gallery-service-area.jpg", alt: "Umzugly, Einstellung von Servicegebiet und maximaler Entfernung", ratio: "4/3" } },
+      { label: "Anpassen", image: { src: "/portfolio/umzugly/gallery-customization.jpg", alt: "Umzugly, Anpassen von Kontaktformular und Dankesseite", ratio: "4/3" } },
+      { label: "Terminwahl", image: { src: "/portfolio/umzugly/gallery-date-selection.jpg", alt: "Umzugly, Terminwahl und Zahlungsquelle im Anfrageprozess", ratio: "4/3" } },
+      { label: "Kontaktdaten", image: { src: "/portfolio/umzugly/gallery-contact.jpg", alt: "Umzugly, Erfassung der Kontaktdaten", ratio: "4/3" } },
+      { label: "E-Mail-Bestätigung", image: { src: "/portfolio/umzugly/gallery-email-verification.jpg", alt: "Umzugly, Bestätigung der E-Mail-Adresse per Code", ratio: "4/3" } },
     ],
     story: [
       {
-        heading: "Warum",
-        body: "Zettelwirtschaft und Excel-Listen kosten Zeit, die in den Unterricht gehört. FekraHub bündelt den Alltag einer Bildungseinrichtung, von der ersten Anmeldung bis zum Zeugnis.",
+        heading: "Die Herausforderung",
+        body: "Umzugsanfragen enthalten viele variable Informationen – von Adressen und Wohnungsdetails bis zu Zusatzleistungen und Terminen. Diese Daten effizient zu erfassen und intern zu verwalten, wird schnell komplex.",
       },
       {
-        heading: "Was",
-        body: "Digitale Anmeldung, Kurs- und Klassenverwaltung, mehrsprachige Kommunikation mit Eltern, Berichte und Zeugnisse, dazu ein Rollen- und Rechtemodell für Verwaltung, Lehrkräfte und Familien.",
+        heading: "Die Lösung",
+        body: "Wir entwickelten eine digitale Plattform, die Kunden Schritt für Schritt durch ihre Umzugsanfrage führt und Unternehmen gleichzeitig eine zentrale Oberfläche für Anfragen, Termine und Konfigurationen bietet.",
+      },
+      {
+        heading: "Zentrale Funktionen",
+        body: "Digitale Anfrage · Umzugsdetails · Zusatzleistungen · Terminplanung · Preis- und Leistungskonfiguration · Verwaltungsdashboard",
+      },
+      {
+        heading: "Das Ergebnis",
+        body: "Ein durchgängiger digitaler Workflow, der die Anfrage für Kunden vereinfacht und die interne Bearbeitung von Umzügen übersichtlicher und effizienter macht.",
       },
     ],
-    links: [{ label: "Mehr zu FekraHub", href: "/produkte/fekrahub" }],
+    servicesSection: {
+      eyebrow: "UNSERE LEISTUNGEN",
+      heading: "DIGITALES PRODUKT TRIFFT CONTENT",
+      intro:
+        "Für Umzugly haben wir Produktentwicklung und Content miteinander verbunden – mit einer individuellen WebApp für digitale Umzugsprozesse und aufmerksamkeitsstarken Reels für die Markenkommunikation.",
+      accentColors: ["#E30613"],
+      items: [
+        {
+          icon: "laptop",
+          title: "WebApp",
+          description: "Konzeption und Entwicklung einer digitalen WebApp, die Umzugsanfragen, Terminplanung und interne Prozesse in einem zentralen System vereint.",
+        },
+        {
+          icon: "video",
+          title: "Reels",
+          description: "Kurze, dynamische Videoformate, die Umzugly sichtbar machen, Leistungen verständlich präsentieren und Aufmerksamkeit in sozialen Netzwerken schaffen.",
+        },
+      ],
+      closingStatement:
+        "Technologie und Content greifen bei Umzugly ineinander: Die WebApp vereinfacht den Prozess, während Reels die Marke nach außen sichtbar und verständlich machen.",
+    },
+  },
+  {
+    slug: "falioun-academy",
+    client: "Falioun Academy",
+    title: "Content & Performance Marketing",
+    description:
+      "Falioun Academy verbindet praxisnahe Weiterbildung mit echter Zukunftsperspektive. Mit einem intensiven Solar-Installer-Programm, realem Praxistraining und professionellen Planungstools werden Teilnehmer Schritt für Schritt auf den Einstieg in die Solarbranche vorbereitet – vom ersten technischen Verständnis bis zur professionellen Installation und Wartung.",
+    year: 2025,
+    categories: ["social-video"],
+    services: ["Videoproduktion", "Performance Marketing"],
+    color: "sun",
+    heroContain: true,
+    logo: "/portfolio/falioun-academy/logo.webp",
+    cover: {
+      src: "/portfolio/falioun-academy/hero-falioun.webp",
+      alt: "Falioun Academy, Solar-Installer-Ausbildung",
+      ratio: "16/9",
+    },
+    /* Kompositionen (Auftaktbild) */
+    screens: [
+      {
+        src: "/portfolio/falioun-academy/hero-falioun.webp",
+        alt: "Falioun Academy, Solar-Installer-Ausbildung",
+        ratio: "16/9",
+      },
+    ],
+    screenSections: [
+      {
+        title: "Social Content & Sichtbarkeit",
+        body: [
+          "Kurze, dynamische Reels zeigen Training, Praxis und Karrierechancen bei Falioun Academy authentisch und verständlich.",
+          "Der Content macht das Ausbildungsangebot erlebbar und schafft Aufmerksamkeit für den Einstieg in die Solarbranche.",
+        ],
+        screens: [],
+        reels: [
+          { href: "https://www.instagram.com/reel/DV3rZmljuPk/" },
+          { href: "https://www.instagram.com/reel/DQUIAuTABPu/" },
+          { href: "https://www.instagram.com/reel/DO9L71Nitst/" },
+        ],
+      },
+    ],
+    servicesSection: {
+      eyebrow: "UNSERE LEISTUNGEN",
+      heading: "CONTENT UND PERFORMANCE FÜR MEHR SICHTBARKEIT",
+      intro:
+        "Für Falioun Academy haben wir visuelle Inhalte und performance-orientierte Kampagnen miteinander verbunden, um das Ausbildungsangebot verständlich zu präsentieren, Aufmerksamkeit zu schaffen und gezielt neue Teilnehmer zu erreichen.",
+      accentColors: ["#E4141C", "#D1A61E"],
+      items: [
+        {
+          icon: "video",
+          title: "Videoproduktion",
+          description: "Produktion dynamischer Videoformate und Reels, die Training, Praxis und Karrierechancen authentisch und verständlich vermitteln.",
+        },
+        {
+          icon: "target",
+          title: "Werbekampagnen & Meta Ads",
+          description: "Gezielte Performance-Kampagnen auf Facebook und Instagram, um relevante Zielgruppen zu erreichen und qualifizierte Interessenten für die Academy zu gewinnen.",
+        },
+      ],
+      closingStatement:
+        "Starker Content trifft auf gezielte Performance: Videos machen das Angebot erlebbar, während Meta Ads die richtigen Menschen genau dort erreichen, wo Aufmerksamkeit entsteht.",
+    },
+  },
+  {
+    slug: "louic",
+    client: "LOUIC",
+    title: "Google Ads Kampagne",
+    description:
+      "LOUIC steht für schnelle, zuverlässige Abschlepp- und Transportservices rund um die Uhr. Mit 24/7-Erreichbarkeit, erfahrenen Fahrern und flexiblen Lösungen sorgt LOUIC dafür, dass Kunden bei Pannen, Unfällen oder Fahrzeugtransporten schnell und sicher weiterkommen.",
+    year: 2025,
+    categories: ["social-video"],
+    services: ["Google Ads", "Performance Marketing"],
+    color: "sun",
+    heroContain: true,
+    hideScreensShowcase: true,
+    logo: "/portfolio/louic/logo.png",
+    cover: {
+      src: "/portfolio/louic/hero-louic.webp",
+      alt: "LOUIC Autotransporter, Abschleppfahrzeug im Einsatz",
+      ratio: "16/9",
+    },
+    /* Kompositionen (Auftaktbild) */
+    screens: [
+      {
+        src: "/portfolio/louic/hero-louic.webp",
+        alt: "LOUIC Autotransporter, Abschleppfahrzeug im Einsatz",
+        ratio: "16/9",
+      },
+    ],
+    servicesSection: {
+      eyebrow: "UNSERE LEISTUNGEN",
+      heading: "SICHTBAR, WENN SCHNELLE HILFE GEFRAGT IST",
+      intro:
+        "Für LOUIC setzen wir auf gezielte Google Ads, um Menschen genau in dem Moment zu erreichen, in dem sie aktiv nach Abschleppdienst, Pannenhilfe oder Fahrzeugtransport suchen.",
+      accentColors: ["#F5C518"],
+      items: [
+        {
+          icon: "search",
+          title: "Google Ads",
+          description: "Gezielte Suchkampagnen, die LOUIC genau dann sichtbar machen, wenn Menschen akut nach Abschleppdienst, Pannenhilfe oder Fahrzeugtransport suchen.",
+        },
+      ],
+      closingStatement:
+        "Mit Google Ads wird LOUIC im entscheidenden Moment gefunden – genau dann, wenn schnelle Hilfe gefragt ist.",
+    },
+  },
+  {
+    slug: "netwitcher",
+    client: "Netwitcher",
+    title: "Strategie, Kreativität und Technologie vereint",
+    description:
+      "Netwitcher ist mehr als eine Digitalagentur – wir verbinden Strategie, Kreativität und Technologie zu einem digitalen System, das Marken sichtbar macht und Wachstum schafft. Von Branding und Content über Social Media und Performance Marketing bis hin zu Websites entwickeln wir jeden Touchpoint mit einem klaren Ziel: Aufmerksamkeit in messbare Ergebnisse zu verwandeln.",
+    year: 2025,
+    categories: ["web", "design", "social-video"],
+    services: ["Webdesign", "Branding & Design", "Social Media", "Content & Video", "Performance Marketing"],
+    color: "violet",
+    featured: true,
+    useBrandLogo: true,
+    cover: {
+      src: media.studio.webp,
+      alt: media.studio.alt,
+      ratio: "16/9",
+    },
+    servicesSection: {
+      eyebrow: "WAS WIR FÜR NETWITCHER MACHEN",
+      heading: "EINE MARKE. EIN SYSTEM. ALLES AUS EINER HAND.",
+      intro:
+        "Netwitcher ist unser eigenes digitales Spielfeld. Hier verbinden wir Strategie, Design, Content, Technologie und Performance Marketing zu einer Marke, bei der jeder Touchpoint auf den nächsten einzahlt.",
+      accentColors: ["#2EE6C8", "#8B5CF6", "#F468A8", "#F5D33D", "#0FB9F2"],
+      items: [
+        {
+          icon: "monitor",
+          title: "Webdesign & Entwicklung",
+          description: "Konzeption und Entwicklung eines digitalen Auftritts, der unsere Marke klar positioniert und Besucher gezielt vom ersten Eindruck bis zur Anfrage führt.",
+        },
+        {
+          icon: "share",
+          title: "Social Media",
+          description: "Strategische Kommunikation und laufender Content, der unsere Marke sichtbar macht, Persönlichkeit zeigt und eine aktive Community aufbaut.",
+        },
+        {
+          icon: "video",
+          title: "Content & Videoproduktion",
+          description: "Fotos, Reels und Videos aus unserem eigenen Content-Studio – entwickelt, um Aufmerksamkeit zu erzeugen und Marken erlebbar zu machen.",
+        },
+        {
+          icon: "palette",
+          title: "Branding & Design",
+          description: "Eine konsistente visuelle Identität, die Logo, Farben, Typografie und Design zu einer unverwechselbaren Markenwelt verbindet.",
+        },
+        {
+          icon: "target",
+          title: "Meta Ads",
+          description: "Performance-orientierte Kampagnen auf Facebook und Instagram, die kreativen Content mit gezielter Reichweite und messbaren Ergebnissen verbinden.",
+        },
+      ],
+      closingStatement:
+        "Keine einzelnen Disziplinen, sondern ein verbundenes System: Branding schafft Wiedererkennung, Content erzeugt Aufmerksamkeit, Social Media baut Beziehungen auf, Ads skalieren Reichweite und die Website verwandelt Interesse in konkrete Anfragen.",
+    },
+    reelsSection: {
+      eyebrow: "AUS UNSEREM STUDIO",
+      heading: "CONTENT, DER NICHT WEITERGESWIPT WIRD",
+      intro: "Konzept, Kamera, Licht und Schnitt – unsere Reels entstehen dort, wo Strategie auf kreative Produktion trifft.",
+      reels: [
+        { href: "https://www.instagram.com/reel/Db3bvXEtfge/" },
+        { href: "https://www.instagram.com/reel/DZfsLwvCSSk/" },
+        { href: "https://www.instagram.com/reel/DYfGIh-NUQJ/" },
+        { href: "https://www.instagram.com/reel/DaVJaU8oWXE/" },
+      ],
+    },
+    clientsSection: {
+      eyebrow: "UNSERE KUNDEN",
+      heading: "MARKEN, DIE UNS IHR VERTRAUEN SCHENKEN",
+      intro:
+        "Von E-Commerce und Bildung bis Software, Services und lokalen Unternehmen – wir entwickeln digitale Lösungen für Marken mit ganz unterschiedlichen Zielen.",
+    },
+    brandStatement: {
+      heading: "MAGIC IN EVERY CLICK.",
+      body: "Von der ersten Idee bis zum letzten Klick entwickeln wir digitale Erlebnisse, bei denen Strategie, Kreativität und Technologie gemeinsam wirken.",
+    },
   },
 ];
 
@@ -268,26 +1028,23 @@ export type StripItem = {
   src?: string;
   alt: string;
   kind: "image" | "video";
+  fit?: "contain";
 };
 
-/** Medienauswahl für den Filmstreifen im Hero: Cover + zwei weitere je Projekt. */
+/** Medienauswahl für den Filmstreifen im Hero: genau eine Karte je Projekt
+ *  (Cover-Bild). `FilmStrip` dupliziert die Liste separat für den
+ *  nahtlosen Endlos-Loop — hier bleibt jedes Projekt ein einzelner Eintrag. */
 export function stripMedia(): StripItem[] {
-  const items: StripItem[] = [];
-  for (const p of portfolioProjects) {
-    const base = { slug: p.slug, client: p.client, color: p.color };
-    items.push({ ...base, ratio: p.cover.ratio ?? "16/10", src: p.cover.src, alt: p.cover.alt, kind: "image" });
-    const extra: StripItem[] = [];
-    p.videos?.slice(0, 1).forEach((v) =>
-      extra.push({ ...base, ratio: v.ratio ?? "9/16", src: v.poster, alt: v.title, kind: "video" })
-    );
-    if (p.website?.mobile)
-      extra.push({ ...base, ratio: "9/16", src: p.website.mobile.src, alt: p.website.mobile.alt, kind: "image" });
-    [...(p.socialPosts ?? []), ...(p.images ?? []), ...(p.screens ?? [])]
-      .slice(0, 2 - extra.length)
-      .forEach((m) => extra.push({ ...base, ratio: m.ratio ?? "4/5", src: m.src, alt: m.alt, kind: "image" }));
-    items.push(...extra);
-  }
-  return items;
+  return portfolioProjects.map((p) => ({
+    slug: p.slug,
+    client: p.client,
+    color: p.color,
+    ratio: p.cover.ratio ?? "16/10",
+    src: p.cover.src,
+    alt: p.cover.alt,
+    kind: "image",
+    fit: p.stripFit,
+  }));
 }
 
 /** Ratio-String → CSS aspect-ratio-Wert. */

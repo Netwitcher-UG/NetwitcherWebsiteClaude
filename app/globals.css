@@ -40,11 +40,18 @@
   --font-heading: var(--font-oxanium), system-ui, sans-serif;
   --font-body: var(--font-nunito), "Nunito Sans", system-ui, sans-serif;
 
+  /* Arabisch: EP Boxi/Oxanium/Nunito sind reine Lateinschrift-Fonts ohne
+     arabische Glyphen. Cairo (geometrisch, kräftig, fuer Ueberschriften)
+     und Tajawal (ruhiger, fuer Fliesstext) sind die arabischen Pendants —
+     aktiviert ueber [dir="rtl"] weiter unten, damit Deutsch unveraendert
+     bleibt. */
+  --font-arabic-heading: var(--font-cairo), "Segoe UI", system-ui, sans-serif;
+  --font-arabic-body: var(--font-tajawal), "Segoe UI", system-ui, sans-serif;
+
   --radius-card: 28px;
   --radius-pill: 999px;
 
   --animate-pulse-ring: pulse-ring 2.4s cubic-bezier(0.22, 1, 0.36, 1) infinite;
-  --animate-strip: strip 70s linear infinite;
   --animate-float: float 5.2s ease-in-out infinite;
 
   @keyframes float {
@@ -54,15 +61,6 @@
     }
     50% {
       transform: translateY(-7px);
-    }
-  }
-
-  @keyframes strip {
-    from {
-      transform: translateX(0);
-    }
-    to {
-      transform: translateX(-50%);
     }
   }
 
@@ -111,17 +109,26 @@
     outline-offset: 3px;
     border-radius: 6px;
   }
-}
 
-@layer base {
-  /* Portfolio-Routen schalten die ganze Seite auf die dunkle Bühne
-     (inkl. Overscroll-Flächen). Gesetzt von components/portfolio/DarkStage. */
-  html[data-stage="dark"] body {
-    background-color: var(--color-void);
-    color: #fff;
+  /* Arabische Bühne: eigener Font-Stack, grosszügigere Zeilenhöhe/
+     Laufweite (arabische Schrift braucht mehr vertikalen Raum als die
+     sehr enge Lateinschrift-Hierarchie) und deaktivierte Lateinschrift-
+     Worttrennung. Nur unter [dir="rtl"] aktiv — Deutsch bleibt exakt wie
+     zuvor. */
+  [dir="rtl"] {
+    --font-boxi: var(--font-arabic-heading);
+    --font-heading: var(--font-arabic-heading);
+    --font-body: var(--font-arabic-body);
+    letter-spacing: 0;
   }
-  html[data-stage="dark"] :focus-visible {
-    outline-color: var(--color-mint);
+
+  [dir="rtl"] h1,
+  [dir="rtl"] h2,
+  [dir="rtl"] h3,
+  [dir="rtl"] .font-boxi,
+  [dir="rtl"] .font-heading {
+    letter-spacing: 0;
+    font-weight: 700;
   }
 }
 
@@ -192,6 +199,37 @@
       radial-gradient(36% 36% at 28% 70%, rgba(244, 104, 168, 0.24), transparent 72%);
   }
 
+}
+
+/* FridaEU Reel-Galerie: die Karte muss die volle, tatsächliche Grösse
+   des nativen Instagram-Embeds umschliessen — in der Höhe UND in der
+   Breite. Instagram setzt Breite/Höhe des generierten iframes per
+   Inline-Style selbst und erzwingt dabei nie weniger als ~326px; die
+   Kartenbreite (siehe ReelGallery) bleibt deshalb immer über diesem
+   Mindestmass, und hier wird das Embed zusätzlich hart auf 100% der
+   Karte gezwungen, damit nichts unten oder seitlich übersteht. */
+.reel-card {
+  box-sizing: border-box;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+}
+.reel-card > div {
+  box-sizing: border-box;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+}
+.reel-card iframe,
+.reel-card blockquote,
+.reel-card .instagram-media {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box;
+  display: block;
+  margin: 0 !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

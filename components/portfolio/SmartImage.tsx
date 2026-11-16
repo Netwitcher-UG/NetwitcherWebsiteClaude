@@ -20,6 +20,8 @@ export function SmartImage({
   className = "",
   imgClassName = "",
   rounded = "rounded-2xl",
+  draggable,
+  fit = "cover",
 }: {
   image: MediaImage;
   color: AccentColor;
@@ -34,11 +36,17 @@ export function SmartImage({
   className?: string;
   imgClassName?: string;
   rounded?: string;
+  /** `false` unterbindet das native Bild-Drag (z. B. in ziehbaren Filmstreifen). */
+  draggable?: boolean;
+  /** `contain` zeigt das Bild vollständig ohne Beschnitt (z. B. wenn das
+   *  Seitenverhältnis der Kachel nicht zum Bild passt). Standard: `cover`. */
+  fit?: "cover" | "contain";
 }) {
   const r = ratio ?? image.ratio ?? "16/10";
+  const fitClass = fit === "contain" ? "object-contain" : "object-cover";
   return (
     <div
-      className={`relative w-full overflow-hidden bg-void-2 ${rounded} ${ratioClass ?? ""} ${className}`}
+      className={`relative w-full overflow-hidden bg-paper-2 ${rounded} ${ratioClass ?? ""} ${className}`}
       style={ratioClass ? undefined : { aspectRatio: ratioValue(r) }}
     >
       {image.src ? (
@@ -49,7 +57,9 @@ export function SmartImage({
             alt={image.alt}
             loading={priority ? "eager" : "lazy"}
             decoding="async"
-            className={`absolute inset-0 h-full w-full object-cover ${imgClassName}`}
+            draggable={draggable}
+            style={draggable === false ? ({ WebkitUserDrag: "none" } as React.CSSProperties) : undefined}
+            className={`absolute inset-0 h-full w-full ${fitClass} ${imgClassName}`}
           />
         ) : (
           <Image
@@ -58,7 +68,9 @@ export function SmartImage({
             fill
             sizes={sizes}
             priority={priority}
-            className={`object-cover ${imgClassName}`}
+            draggable={draggable}
+            style={draggable === false ? ({ WebkitUserDrag: "none" } as React.CSSProperties) : undefined}
+            className={`${fitClass} ${imgClassName}`}
           />
         )
       ) : (

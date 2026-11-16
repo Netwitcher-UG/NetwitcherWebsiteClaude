@@ -1,20 +1,24 @@
 export const site = {
   name: "Netwitcher",
-  legalName: "Netwitcher Digital Agency",
+  legalName: "Netwitcher UG (haftungsbeschränkt)",
   slogan: "Magic in Every Click",
   claim: "Digital Agency & Content-Studio in Berlin",
-  // Kontaktdaten aus der offiziellen Netwitcher-Broschüre
+  // Verifizierte Unternehmensdaten (Impressum/Handelsregister)
   url: "https://netwitcher.com",
   email: "info@netwitcher.com",
-  phone: "+49 176 73247186",
-  phoneHref: "tel:+4917673247186",
+  phone: "017673247186",
+  phoneHref: "tel:017673247186",
   whatsappNumber: "4917673247186",
   city: "Berlin",
   country: "Deutschland",
-  // TODO: echte Straße + PLZ für Impressum/Schema eintragen
-  street: "Musterstraße 1",
-  zip: "10115",
-  calendlyUrl: "https://calendly.com/netwitcher/erstgespraech",
+  street: "Kochhannstraße 6",
+  zip: "10249",
+  hrb: "HRB 256419 B",
+  registerCourt: "Amtsgericht Charlottenburg",
+  representative: "Mhd Anas Sadek",
+  vatId: "DE364219286",
+  calendlyUrl: "https://calendar.app.google/wuaBBFtxvHvxJSga6",
+  facebook: "https://www.facebook.com/netwitcher.de",
   instagram: "https://www.instagram.com/netwitcher",
   linkedin: "https://www.linkedin.com/company/netwitcher",
   tiktok: "https://www.tiktok.com/@netwitcher",
@@ -27,3 +31,14 @@ export const whatsappHref = (text?: string) =>
 
 export const defaultWhatsappText =
   "Hallo Netwitcher! Ich interessiere mich für Content & Marketing und hätte gern ein kostenloses Erstgespräch.";
+
+/** Vier offizielle Social-Links für Header/Footer (beide nutzen dieselbe
+ *  Liste statt sie zu duplizieren, siehe SocialIcon in components/icons.tsx).
+ *  Labels bewusst nicht lokalisiert — Plattformnamen bleiben in beiden
+ *  Sprachen gleich. */
+export const socialLinks = [
+  { id: "facebook", href: site.facebook, ariaLabel: "Netwitcher auf Facebook" },
+  { id: "tiktok", href: site.tiktok, ariaLabel: "Netwitcher auf TikTok" },
+  { id: "instagram", href: site.instagram, ariaLabel: "Netwitcher auf Instagram" },
+  { id: "whatsapp", href: whatsappHref(), ariaLabel: "Netwitcher auf WhatsApp" },
+] as const;

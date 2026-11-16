@@ -8,6 +8,223 @@ const strokeProps = {
   strokeLinejoin: "round" as const,
 };
 
+export type FeatureIconName =
+  | "users"
+  | "calendar-check"
+  | "book"
+  | "message-circle"
+  | "bar-chart"
+  | "shield-check"
+  | "inbox"
+  | "calendar"
+  | "sliders"
+  | "map-pin"
+  | "list-checks"
+  | "package"
+  | "shopping-bag"
+  | "share"
+  | "video"
+  | "target"
+  | "trending-up"
+  | "shopping-cart"
+  | "laptop"
+  | "monitor"
+  | "app-window"
+  | "search"
+  | "palette"
+  | "eye"
+  | "cursor-click"
+  | "percent";
+
+/** Zweites, kleines Icon-Set im selben Strich-Stil wie {@link ServiceIcon},
+ *  für Feature-Karten ausserhalb der Leistungen-Seite. */
+export function FeatureIcon({
+  icon,
+  className = "h-6 w-6",
+}: {
+  icon: FeatureIconName;
+  className?: string;
+}) {
+  const paths: Record<FeatureIconName, React.ReactNode> = {
+    users: (
+      <>
+        <circle cx="9" cy="8.5" r="3" />
+        <path d="M3.5 19.5c0-3 2.5-5 5.5-5s5.5 2 5.5 5" />
+        <path d="M16 8.2a2.7 2.7 0 0 1 0 5.2M20.5 19.5c0-2.5-1.8-4.3-4-4.9" />
+      </>
+    ),
+    "calendar-check": (
+      <>
+        <rect x="4" y="5.5" width="16" height="14" rx="2" />
+        <path d="M8 3.5v4M16 3.5v4M4 10h16" />
+        <path d="m9 14.5 2 2 4-4" />
+      </>
+    ),
+    book: (
+      <>
+        <path d="M4 6a2 2 0 0 1 2-2h5.5v15H6a2 2 0 0 0-2 2V6Z" />
+        <path d="M20 6a2 2 0 0 0-2-2h-5.5v15H18a2 2 0 0 1 2 2V6Z" />
+      </>
+    ),
+    "message-circle": (
+      <>
+        <path d="M4 12a8 8 0 1 1 3.3 6.4L4 19.5l1.1-3.2A7.9 7.9 0 0 1 4 12Z" />
+      </>
+    ),
+    "bar-chart": (
+      <>
+        <path d="M4 20V10.5M10 20V4M16 20v-7M20 20H4" />
+      </>
+    ),
+    "shield-check": (
+      <>
+        <path d="M12 3.5 19 6v6c0 4.5-3 7.8-7 9-4-1.2-7-4.5-7-9V6l7-2.5Z" />
+        <path d="m9 12 2 2 4-4" />
+      </>
+    ),
+    inbox: (
+      <>
+        <path d="M4 13h4l1.5 2.5h5L16 13h4" />
+        <path d="M4 13V6.5A1.5 1.5 0 0 1 5.5 5h13A1.5 1.5 0 0 1 20 6.5V13" />
+        <path d="M4 13v4.5A1.5 1.5 0 0 0 5.5 19h13a1.5 1.5 0 0 0 1.5-1.5V13" />
+      </>
+    ),
+    calendar: (
+      <>
+        <rect x="4" y="5.5" width="16" height="14" rx="2" />
+        <path d="M8 3.5v4M16 3.5v4M4 10h16" />
+        <circle cx="9" cy="14.5" r="1.1" fill="currentColor" stroke="none" />
+        <circle cx="15" cy="14.5" r="1.1" fill="currentColor" stroke="none" />
+      </>
+    ),
+    sliders: (
+      <>
+        <path d="M5 19v-6M5 9V5M12 19v-4M12 11V5M19 19v-2M19 13V5" />
+        <circle cx="5" cy="11" r="1.8" />
+        <circle cx="12" cy="13" r="1.8" />
+        <circle cx="19" cy="15" r="1.8" />
+      </>
+    ),
+    "map-pin": (
+      <>
+        <path d="M12 21s7-7.2 7-12A7 7 0 0 0 5 9c0 4.8 7 12 7 12Z" />
+        <circle cx="12" cy="9" r="2.4" />
+      </>
+    ),
+    "list-checks": (
+      <>
+        <path d="M9 6h11M9 12h11M9 18h11" />
+        <path d="m4 6 1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2" />
+      </>
+    ),
+    package: (
+      <>
+        <path d="M3.5 8 12 3.5 20.5 8 12 12.5 3.5 8Z" />
+        <path d="M3.5 8v9L12 21.5 20.5 17V8" />
+        <path d="M12 12.5V21.5" />
+      </>
+    ),
+    "shopping-bag": (
+      <>
+        <path d="M6 8h12l-1 12a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L6 8Z" />
+        <path d="M9 8V6a3 3 0 0 1 6 0v2" />
+      </>
+    ),
+    share: (
+      <>
+        <circle cx="18" cy="5" r="2.2" />
+        <circle cx="6" cy="12" r="2.2" />
+        <circle cx="18" cy="19" r="2.2" />
+        <path d="m8 10.8 8-4.6M8 13.2l8 4.6" />
+      </>
+    ),
+    video: (
+      <>
+        <path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h9A1.5 1.5 0 0 1 16 8.5v7A1.5 1.5 0 0 1 14.5 17h-9A1.5 1.5 0 0 1 4 15.5v-7Z" />
+        <path d="m16 10.5 4-2.3v7.6l-4-2.3" />
+      </>
+    ),
+    target: (
+      <>
+        <circle cx="12" cy="12" r="7.5" />
+        <circle cx="12" cy="12" r="4" />
+        <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
+      </>
+    ),
+    "trending-up": (
+      <>
+        <path d="M4 16.5 10 10l3.5 3.5L20 6.5" />
+        <path d="M14.5 6.5H20v5.5" />
+      </>
+    ),
+    "shopping-cart": (
+      <>
+        <path d="M3.5 4h2l2.2 11.2a1.8 1.8 0 0 0 1.77 1.5h7.6a1.8 1.8 0 0 0 1.77-1.46L20.5 8H6.2" />
+        <circle cx="9.5" cy="19.5" r="1.3" fill="currentColor" stroke="none" />
+        <circle cx="17" cy="19.5" r="1.3" fill="currentColor" stroke="none" />
+      </>
+    ),
+    laptop: (
+      <>
+        <rect x="4.5" y="5" width="15" height="9.5" rx="1.2" />
+        <path d="M2.5 18.2h19a1 1 0 0 1-.9 1.3H3.4a1 1 0 0 1-.9-1.3Z" />
+      </>
+    ),
+    monitor: (
+      <>
+        <rect x="3.5" y="4.5" width="17" height="12" rx="1.5" />
+        <path d="M9.5 20h5M12 16.5V20" />
+      </>
+    ),
+    "app-window": (
+      <>
+        <rect x="3.5" y="4.5" width="17" height="15" rx="1.8" />
+        <path d="M3.5 9h17" />
+        <circle cx="6.3" cy="6.7" r="0.6" fill="currentColor" stroke="none" />
+        <circle cx="8.3" cy="6.7" r="0.6" fill="currentColor" stroke="none" />
+      </>
+    ),
+    search: (
+      <>
+        <circle cx="10.5" cy="10.5" r="6.5" />
+        <path d="m15.5 15.5 4.5 4.5" />
+      </>
+    ),
+    palette: (
+      <>
+        <path d="M12 3.5C7.3 3.5 3.5 7 3.5 11.3c0 3.4 2.3 4.7 4 4.7.8 0 1.3-.5 1.3-1.2 0-.5-.3-.8-.3-1.4 0-1.1.9-2 2-2h2.2c2.7 0 4.8-2 4.8-4.6 0-3.5-3-5.8-6.5-5.8Z" />
+        <circle cx="8" cy="9.3" r="1" fill="currentColor" stroke="none" />
+        <circle cx="11.7" cy="6.9" r="1" fill="currentColor" stroke="none" />
+        <circle cx="15.2" cy="9" r="1" fill="currentColor" stroke="none" />
+      </>
+    ),
+    eye: (
+      <>
+        <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" />
+        <circle cx="12" cy="12" r="3" />
+      </>
+    ),
+    "cursor-click": (
+      <>
+        <path d="M5 3.5 18.5 10l-5.8 1.7L11 17.5 5 3.5Z" />
+      </>
+    ),
+    percent: (
+      <>
+        <circle cx="7.5" cy="7.5" r="2.3" />
+        <circle cx="16.5" cy="16.5" r="2.3" />
+        <path d="M17.5 6.5 6.5 17.5" />
+      </>
+    ),
+  };
+
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true" {...strokeProps}>
+      {paths[icon]}
+    </svg>
+  );
+}
+
 export function ServiceIcon({
   icon,
   className = "h-7 w-7",
@@ -73,6 +290,61 @@ export function ServiceIcon({
       <>
         <path d="M7 8V4.5h10V8M7 16H4.5v-6h15v6H17" />
         <rect x="7" y="13.5" width="10" height="6" rx="1" />
+      </>
+    ),
+  };
+
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true" {...strokeProps}>
+      {paths[icon]}
+    </svg>
+  );
+}
+
+export type SocialIconName = "facebook" | "tiktok" | "instagram" | "whatsapp";
+
+/** Vier Social-Icons im selben Strich-/Flächen-Stil wie {@link FeatureIcon}
+ *  — bewusst vereinfachte, einfarbige (currentColor) Eigeninterpretationen
+ *  statt mehrfarbiger offizieller Logos, damit Header/Footer sich wie Teil
+ *  des Netwitcher-Designsystems lesen statt wie ein generisches Social-
+ *  Media-Widget. */
+export function SocialIcon({
+  icon,
+  className = "h-4 w-4",
+}: {
+  icon: SocialIconName;
+  className?: string;
+}) {
+  const paths: Record<SocialIconName, React.ReactNode> = {
+    facebook: (
+      <path
+        d="M13.4 21v-7.2h2.42l.36-2.8h-2.78v-1.8c0-.81.23-1.36 1.39-1.36h1.49V5.3A20.6 20.6 0 0 0 14.3 5.2c-2.17 0-3.66 1.33-3.66 3.77v2.1H8.2v2.8h2.44V21h2.76Z"
+        fill="currentColor"
+        stroke="none"
+      />
+    ),
+    tiktok: (
+      <path
+        d="M16.6 3.1c.4 2 1.8 3.5 3.9 3.7v2.8c-1.4 0-2.8-.4-3.9-1.3v6.1a5.5 5.5 0 1 1-5.5-5.5c.3 0 .6 0 .9.1v2.9a2.6 2.6 0 1 0 1.8 2.5V3.1h2.8Z"
+        fill="currentColor"
+        stroke="none"
+      />
+    ),
+    instagram: (
+      <>
+        <rect x="3.5" y="3.5" width="17" height="17" rx="5" />
+        <circle cx="12" cy="12" r="4.2" />
+        <circle cx="17" cy="7" r="1" fill="currentColor" stroke="none" />
+      </>
+    ),
+    whatsapp: (
+      <>
+        <circle cx="12" cy="12" r="8.5" />
+        <path
+          d="M8.9 9c.2-.5.5-.5.7-.5h.6c.2 0 .4 0 .5.4s.6 1.5.6 1.6.1.3 0 .4-.2.4-.3.5-.3.3-.1.6c.3.5.8 1.1 1.6 1.6.8.4.9.3 1.1.3s.5-.3.7-.6.4-.3.7-.2 1.4.7 1.7.8.4.2.4.3-.1.8-.3 1.1-.8.8-1.6.8c-1 0-2.7-.6-4-1.9C9.7 13.7 9 12.3 9 11.1c0-.4.1-1.1.4-1.6Z"
+          fill="currentColor"
+          stroke="none"
+        />
       </>
     ),
   };

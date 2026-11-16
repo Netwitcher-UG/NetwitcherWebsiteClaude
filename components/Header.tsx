@@ -4,26 +4,33 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 import { BrandStar, BrandWordmark } from "./brand/Logo";
-import { leistungenServices } from "@/lib/services";
+import { getDict } from "@/lib/i18n/dictionary";
+import { withLocale, type Locale } from "@/lib/i18n/locale";
+import { navServicesAr, navServicesDe } from "@/lib/i18n/nav-services";
 import { ARROW_PATH } from "./arrows";
+import { SocialIcon } from "./icons";
+import { socialLinks } from "@/lib/site";
 
-const navItems = [
-  { href: "/leistungen", label: "Leistungen", dropdown: true },
-  { href: "/studio", label: "Studio" },
-  { href: "/portfolio", label: "Portfolio" },
-  { href: "/ueber-uns", label: "Über uns" },
-  { href: "/blog", label: "Blog" },
-];
-
-export function Header() {
+export function Header({ locale = "de" }: { locale?: Locale }) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
   const pathname = usePathname();
   const reduce = useReducedMotion();
-  // Auf der Portfolio-Bühne wechselt der Header auf helle Schrift.
-  const dark = pathname.startsWith("/portfolio");
+  const t = getDict(locale);
+  const isAr = locale === "ar";
+  const navServices = isAr ? navServicesAr : navServicesDe;
+  const L = (href: string) => withLocale(href, locale);
+
+  const navItems = [
+    { href: L("/leistungen"), match: "/leistungen", label: t.nav.services, dropdown: true },
+    { href: L("/studio"), match: "/studio", label: t.nav.studio },
+    { href: L("/portfolio"), match: "/portfolio", label: t.nav.portfolio },
+    { href: L("/ueber-uns"), match: "/ueber-uns", label: t.nav.about },
+    { href: L("/blog"), match: "/blog", label: t.nav.blog },
+  ];
 
   // Sentinel statt Scroll-Listener: feuert nur beim Übertritt.
   useEffect(() => {
@@ -45,22 +52,19 @@ export function Header() {
 
   return (
     <header
-      data-dark={dark || undefined}
       className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
         scrolled
-          ? dark
-            ? "border-b border-white/10 bg-void/80 py-2 backdrop-blur-xl"
-            : "border-b border-line bg-paper/85 py-2 shadow-soft backdrop-blur-xl"
+          ? "border-b border-line bg-paper/85 py-2 shadow-soft backdrop-blur-xl"
           : "bg-transparent py-4"
       }`}
     >
       <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-4 px-4 sm:px-6">
-        <Link href="/" className="group flex items-center gap-2.5" aria-label="Netwitcher, Startseite">
+        <Link href={L("/")} className="group flex items-center gap-2.5" aria-label={t.nav.homeAriaLabel}>
           <BrandStar size={38} className="transition-transform duration-500 group-hover:rotate-[36deg]" />
-          <BrandWordmark height={14} className={dark ? "text-white" : "text-ink"} />
+          <BrandWordmark height={14} className="text-ink" />
         </Link>
 
-        <nav className="hidden items-center gap-1 lg:flex" aria-label="Hauptnavigation">
+        <nav className="hidden items-center gap-1 lg:flex" aria-label={t.nav.mainNavAriaLabel}>
           {navItems.map((item) =>
             item.dropdown ? (
               <div
@@ -74,9 +78,9 @@ export function Header() {
                   aria-expanded={servicesOpen}
                   onFocus={() => setServicesOpen(true)}
                   className={`rounded-full px-3.5 py-2.5 text-sm font-semibold transition-colors ${
-                    pathname.startsWith("/leistungen")
-                      ? dark ? "text-white" : "text-ink"
-                      : dark ? "text-white/60 hover:text-white" : "text-ink-3 hover:text-ink"
+                    pathname.startsWith(L(item.match))
+                      ? "text-ink"
+                      : "text-ink-3 hover:text-ink"
                   }`}
                 >
                   <span className="inline-flex items-center gap-1.5">
@@ -97,16 +101,20 @@ export function Header() {
                     >
                       <div className="rounded-card border border-line bg-white p-2 shadow-lift">
                         <Link
-                          href="/studio"
-                          className="block rounded-xl px-4 py-2.5 text-sm font-bold text-pink transition-colors hover:bg-paper-2"
+                          href={L("/studio")}
+                          className={`block rounded-xl px-4 text-sm font-bold transition-colors hover:bg-paper-2 ${
+                            isAr ? "py-2 text-pink/85" : "py-2.5 text-pink"
+                          }`}
                         >
-                          Content Creation & Studio Berlin
+                          {t.nav.studioDropdownLabel}
                         </Link>
-                        {leistungenServices.map((s) => (
+                        {navServices.map((s) => (
                           <Link
                             key={s.slug}
-                            href={s.href}
-                            className="block rounded-xl px-4 py-2.5 text-sm font-medium text-ink-2 transition-colors hover:bg-paper-2 hover:text-ink"
+                            href={L(s.href)}
+                            className={`block rounded-xl px-4 text-sm font-medium text-ink-2 transition-colors hover:bg-paper-2 hover:text-ink ${
+                              isAr ? "py-2" : "py-2.5"
+                            }`}
                           >
                             {s.navTitle}
                           </Link>
@@ -122,8 +130,8 @@ export function Header() {
                 href={item.href}
                 className={`rounded-full px-3.5 py-2.5 text-sm font-semibold transition-colors ${
                   pathname === item.href || pathname.startsWith(item.href + "/")
-                    ? dark ? "text-white" : "text-ink"
-                    : dark ? "text-white/60 hover:text-white" : "text-ink-3 hover:text-ink"
+                    ? "text-ink"
+                    : "text-ink-3 hover:text-ink"
                 }`}
               >
                 {item.label}
@@ -133,25 +141,42 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-3">
+          <div className="hidden items-center gap-0.5 lg:flex">
+            {socialLinks.map((s) => (
+              <a
+                key={s.id}
+                href={s.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={s.ariaLabel}
+                className="flex h-7 w-7 items-center justify-center rounded-full text-ink-3 transition-colors hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mint"
+              >
+                <SocialIcon icon={s.id} className="h-[15px] w-[15px]" />
+              </a>
+            ))}
+          </div>
+          <div className="hidden sm:block">
+            <LanguageSwitcher locale={locale} dict={t} />
+          </div>
           <Link
-            href="/kontakt"
+            href={L("/kontakt")}
             className={`hidden rounded-full px-5 py-2.5 font-heading text-xs font-bold tracking-wide transition-colors duration-200 sm:inline-flex ${
-              dark ? "bg-white text-ink hover:bg-paper-2" : "bg-ink text-white hover:bg-deep-2"
+              "bg-ink text-white hover:bg-deep-2"
             }`}
           >
-            Projekt starten
+            {t.nav.contactCta}
           </Link>
           <button
             type="button"
             onClick={() => setMobileOpen((o) => !o)}
             aria-expanded={mobileOpen}
-            aria-label={mobileOpen ? "Menü schließen" : "Menü öffnen"}
+            aria-label={mobileOpen ? t.nav.menuClose : t.nav.menuOpen}
             className={`flex h-11 w-11 flex-col items-center justify-center gap-1.5 rounded-full border lg:hidden ${
-              dark ? "border-white/15 bg-white/10" : "border-line bg-white/70"
+              "border-line bg-white/70"
             }`}
           >
-            <span className={`h-0.5 w-5 transition-transform ${dark ? "bg-white" : "bg-ink"} ${mobileOpen ? "translate-y-1 rotate-45" : ""}`} />
-            <span className={`h-0.5 w-5 transition-transform ${dark ? "bg-white" : "bg-ink"} ${mobileOpen ? "-translate-y-1 -rotate-45" : ""}`} />
+            <span className={`h-0.5 w-5 transition-transform bg-ink ${mobileOpen ? "translate-y-1 rotate-45" : ""}`} />
+            <span className={`h-0.5 w-5 transition-transform bg-ink ${mobileOpen ? "-translate-y-1 -rotate-45" : ""}`} />
           </button>
         </div>
       </div>
@@ -163,9 +188,9 @@ export function Header() {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.25 }}
-            aria-label="Mobile Navigation"
+            aria-label={t.nav.mobileNavAriaLabel}
             className={`overflow-hidden border-t backdrop-blur-xl lg:hidden ${
-              dark ? "border-white/10 bg-void/95" : "border-line bg-paper/95"
+              "border-line bg-paper/95"
             }`}
           >
             <div className="space-y-1 px-4 py-4">
@@ -174,20 +199,37 @@ export function Header() {
                   key={item.href}
                   href={item.href}
                   className={`block rounded-xl px-4 py-3 text-base font-semibold transition-colors ${
-                    dark ? "text-white/80 hover:bg-white/10 hover:text-white" : "text-ink-2 hover:bg-white hover:text-ink"
+                    "text-ink-2 hover:bg-white hover:text-ink"
                   }`}
                 >
                   {item.label}
                 </Link>
               ))}
               <Link
-                href="/kontakt"
+                href={L("/kontakt")}
                 className={`mt-3 block rounded-full px-5 py-3 text-center font-heading text-sm font-bold ${
-                  dark ? "bg-white text-ink" : "bg-ink text-white"
+                  "bg-ink text-white"
                 }`}
               >
-                Projekt starten
+                {t.nav.contactCta}
               </Link>
+              <div className="mt-3 flex justify-center sm:hidden">
+                <LanguageSwitcher locale={locale} dict={t} variant="mobile" />
+              </div>
+              <div className="mt-4 flex items-center justify-center gap-2 border-t border-line pt-4">
+                {socialLinks.map((s) => (
+                  <a
+                    key={s.id}
+                    href={s.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={s.ariaLabel}
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white text-ink-3 transition-colors hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mint"
+                  >
+                    <SocialIcon icon={s.id} className="h-4 w-4" />
+                  </a>
+                ))}
+              </div>
             </div>
           </motion.nav>
         )}
