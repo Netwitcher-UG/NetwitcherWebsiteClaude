@@ -54,8 +54,12 @@ export function Reveal({
     <Comp
       ref={ref as never}
       initial={reduce ? false : { opacity: 0, y: 24 }}
-      animate={shown ? { opacity: 1, y: 0 } : undefined}
-      transition={{ duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] }}
+      // Bei reduce=true unabhängig von `shown` sofort sichtbar: `shown` hängt
+      // am IntersectionObserver-Timing bzw. SSR-Hydration, `reduce` darf dem
+      // nie im Weg stehen (sonst bleibt der Server-gerenderte initial-Zustand
+      // opacity:0 bis zum nächsten Scroll-Trigger stehen).
+      animate={reduce || shown ? { opacity: 1, y: 0 } : undefined}
+      transition={{ duration: reduce ? 0 : 0.6, delay: reduce ? 0 : delay, ease: [0.22, 1, 0.36, 1] }}
       className={className}
     >
       {children}
