@@ -141,7 +141,7 @@ export const de: Dictionary = {
   footer: {
     tagline: "Magic in Every Click",
     description:
-      "Digital Agency & Content-Studio in Berlin. Wir produzieren Content, der Aufmerksamkeit erzeugt, und Kampagnen, die Kunden bringen.",
+      "Kreativagentur & Content-Studio in Berlin. Wir entwickeln starken Content und wirkungsvolle Kampagnen, die Marken sichtbar machen und Kunden erreichen.",
     servicesHeading: "Leistungen",
     studioLink: "Content Creation & Studio",
     allServicesLink: "Alle Leistungen",
